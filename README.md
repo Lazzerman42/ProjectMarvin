@@ -5,13 +5,13 @@ The point of this project is to
 
 1. Give myself a tool when debugging my homebuilt Smart Home stuff - I use RPi Pico W with Micropython
 2. Have a central monitor/logging point for all my devices and services. With an easy to call API endpoint, so low end devices can use it
-3. Stepping stones/Builing blocks for other folks who is coding IoT stuff - and maybe are more into electronics than code
-4. ... Always fun to build stuff with new technologies :-)
+3. A "framework" for API-functions and a WEB UI. Whenever I dream up a new idea, the building blocks are aldready in place making it simple and fast to add new stuff
+4. Stepping stones/Builing blocks for other folks who is coding IoT stuff - and maybe are more into electronics than code
+5. ... Always fun to build stuff with new technologies :-)
 
-So what is this? It is a simple .NET 8 BlazorWebApp project that uses SignalR/Websocket to display realtime incoming LogEntries. 
-Project is set up for Blazor Interactive Server now - but wyou can change the Blazor type to webassembly and it will run just fine(just change the headoutlet in App.Razor)
+So what is this? It is a simple .NET 8 Blazor ServerApp project + ASP Net Core Minimal API project that uses SignalR/Websocket to display realtime incoming LogEntries. 
 
-The solution is divided into two projects, one serversideproject and one clientside. Serverside is also hosting some minimal API:s that I find useful.
+The solution is divided into two projects, one serversideproject Webproject, with identity enabled and one API project. 
 
 The API:s included are:
 
@@ -29,7 +29,10 @@ Requirements:
 1. NET 8 SDK
 2. VS 2022 Community or better / VS Code with C# Dev Kit
 3. If you are going to call API:s - you must host BlazorLogWeb so it gets an IP number - not "localhost". If you only use it locally in your internal network, you can use http or https. If you want to host this webapp internet facing, you must add some kind of login and you must use HTTPS.
+4. SQLite Database - can be run on all platforms
 
+Coding stuff:
+1. QuickGrid uses Scoped CSS to style the headers and lines. "Home.razor.css" - ::deep is for selection the QuickGrid scope. For this to work, the Quickgrid must be contained in a container, like a DIV tag
 Have Fun!
 
 // Lazze Ziden - Stockholm Sweden
