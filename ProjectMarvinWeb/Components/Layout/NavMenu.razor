@@ -1,0 +1,78 @@
+﻿@implements IDisposable
+
+@inject NavigationManager NavigationManager
+
+<div class="top-row ps-3 navbar navbar-dark">
+	<div class="container-fluid">
+		<a class="navbar-brand" href="">Project Marvin</a>
+	</div>
+</div>
+
+<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+	<nav class="flex-column">
+		<div class="nav-item px-3">
+			<NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+				<span>
+					<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-table" viewBox="0 0 16 16">
+						<path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm15 2h-4v3h4zm0 4h-4v3h4zm0 4h-4v3h3a1 1 0 0 0 1-1zm-5 3v-3H6v3zm-5 0v-3H1v2a1 1 0 0 0 1 1zm-4-4h4V8H1zm0-4h4V4H1zm5-3v3h4V4zm4 4H6v3h4z" />
+					</svg>
+				</span> Log
+			</NavLink>
+		</div>
+		<AuthorizeView>
+			<Authorized>
+				<div class="nav-item px-3">
+					<NavLink class="nav-link" href="Account/Manage">
+						<span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> @context.User.Identity?.Name
+					</NavLink>
+				</div>
+				<div class="nav-item px-3">
+					<form action="Account/Logout" method="post">
+						<AntiforgeryToken />
+						<input type="hidden" name="ReturnUrl" value="@currentUrl" />
+						<button type="submit" class="nav-link">
+							<span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span> Logout
+						</button>
+					</form>
+				</div>
+			</Authorized>
+			<NotAuthorized>
+				<div class="nav-item px-3">
+					<NavLink class="nav-link" href="Account/Register">
+						<span class="bi bi-person-nav-menu" aria-hidden="true"></span> Register
+					</NavLink>
+				</div>
+				<div class="nav-item px-3">
+					<NavLink class="nav-link" href="Account/Login">
+						<span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span> Login
+					</NavLink>
+				</div>
+			</NotAuthorized>
+		</AuthorizeView>
+	</nav>
+	<img src="./Images/Marvin1.jpg" alt="Marvin" class="bottom-image">
+</div>
+
+@code {
+	private string? currentUrl;
+
+	protected override void OnInitialized()
+	{
+		currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+		NavigationManager.LocationChanged += OnLocationChanged;
+	}
+
+	private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+	{
+		currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
+		StateHasChanged();
+	}
+
+	public void Dispose()
+	{
+		NavigationManager.LocationChanged -= OnLocationChanged;
+	}
+}
+
