@@ -33,6 +33,17 @@ Requirements:
 
 Coding stuff:
 1. QuickGrid uses Scoped CSS to style the headers and lines. "Home.razor.css" - ::deep is for selection the QuickGrid scope. For this to work, the Quickgrid must be contained in a container, like a DIV tag
+2. API Project have an Attribute-class for checking "API KEY" - it is not used right now, but can easily be added to all endpoints
+3. Blazor Server App - have some "smart" code to reconnect to SignalR that is run in the API project. A green or red symnbol is shown when connected/disconnected
+4. Identity is enabled - also using SQLite. You can add the [Authorize] keyword to all pages you want to require login. I'm having it on the Register page - so no one can register a new account without already being logged in.
+5. IPFilterMiddleware is a class that can be registered in the API project, it will stop all API calls from non local IP-adresses.
+
+Ideas for the future
+1. You can host the solultion in the cloud if you like
+2. Or in containers/docker
+3. Add support for MQTT, both sending and receiving
+4. Add new Web-pages with information / stuff that makes sense for your project needs
+
 Have Fun!
 
 // Lazze Ziden - Stockholm Sweden
