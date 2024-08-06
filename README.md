@@ -1,8 +1,12 @@
 # ProjectMarvin
 ![image](https://github.com/user-attachments/assets/51b1cb75-3ddf-4b65-be63-333e1d8f0707)
-![image](https://github.com/user-attachments/assets/a22cdd5a-4260-4ec6-9077-599e77117867)
-![image](https://github.com/user-attachments/assets/a786a21d-4e2b-4603-a61c-4b63babecb4d)
+*This is my usecase - I need to log/collect info from lots of different devices and computers.*
 
+![image](https://github.com/user-attachments/assets/a22cdd5a-4260-4ec6-9077-599e77117867)
+*This is the Blazor Server WebApp, logged in as Marvin@log.com*
+
+![image](https://github.com/user-attachments/assets/a786a21d-4e2b-4603-a61c-4b63babecb4d)
+*API project with swagger*
 
 The point of this project is to
 
