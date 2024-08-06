@@ -1,5 +1,8 @@
 # ProjectMarvin
 ![image](https://github.com/user-attachments/assets/51b1cb75-3ddf-4b65-be63-333e1d8f0707)
+![image](https://github.com/user-attachments/assets/2d801ce9-8455-406b-b6c6-41289bfe8a9f)
+![image](https://github.com/user-attachments/assets/a786a21d-4e2b-4603-a61c-4b63babecb4d)
+
 
 The point of this project is to
 
