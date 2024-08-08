@@ -18,10 +18,10 @@ builder.Services.AddDbContextFactory<ApplicationDbContextLogData>(options =>
 		options.UseSqlite(LogDataConnection));
 
 // Start API on this machines IP-Adress on port 4200
-builder.WebHost.ConfigureKestrel(serverOptions =>
-{
-	serverOptions.Listen(IPAddress.Parse(GetLocalIPAddress()), 4200);
-});
+//builder.WebHost.ConfigureKestrel(serverOptions =>
+//{
+//	serverOptions.Listen(IPAddress.Parse(GetLocalIPAddress()), 4200);
+//});
 
 var app = builder.Build();
 
