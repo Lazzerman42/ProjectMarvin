@@ -53,7 +53,7 @@ Included are also some client-test code, one micropython file showing how to use
 
 ## Getting started / Setup
 1. The projects are configured to use localhost - API project at port 4200. If you run both web and API locally, you can use Kestrel for both. If you want to access the Marvin Blazor Web from internet, use HTTPS/SSL and host using IIS ( or whats best on your platform )
-2. Check the AppSettings.json for the projects, the Path for SQLite LogDB is essential.
+2. Check the AppSettings.json for the projects, the Path for SQLite LogDB is essential. Project Marvin(web) has two database connection strings, one for LogDB and one for IdentityDB. LogDB is used by both the API and the WEB project.
 3. I run the Marvin API locally, using Kestrel - and I let it start on the current machines IP + port 4200, uncomment the code on line 20-24 in Program.cs (Marvin API) if you want to do the same
 4. The user in the Identity database is: Marvin@log.com / Marvin42!
 5. Make sure you change password / makes a new user before exposing the Web to Internet.
