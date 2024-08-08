@@ -35,13 +35,13 @@ Requirements:
 
 1. NET 8 SDK
 2. VS 2022 Community or better / VS Code with C# Dev Kit
-3. If you are going to call API:s - you must host BlazorLogWeb so it gets an IP number - not "localhost". If you only use it locally in your internal network, you can use http or https. If you want to host this webapp internet facing, you must add some kind of login and you must use HTTPS.
+3. If you are going to call API:s from other devices, - you must host Project Marvin API so it gets an IP number - not "localhost". If you only use it locally in your internal network
 4. SQLite Database - can be run on all platforms
 
 Coding stuff:
 1. QuickGrid uses Scoped CSS to style the headers and lines. "Home.razor.css" - ::deep is for selection the QuickGrid scope. For this to work, the Quickgrid must be contained in a container, like a DIV tag
 2. API Project have an Attribute-class for checking "API KEY" - it is not used right now, but can easily be added to all endpoints
-3. Blazor Server App - have some "smart" code to reconnect to SignalR that is run in the API project. A green or red symnbol is shown when connected/disconnected
+3. Blazor Server App - have some "smart" code to reconnect to SignalR that is run in the API project. A green or red symnbol is shown when connected/disconnected. The code for this is in the Home.razor.cs in the Project Marvin project
 4. Identity is enabled - also using SQLite. You can add the [Authorize] keyword to all pages you want to require login. I'm having it on the Register page - so no one can register a new account without already being logged in.
 5. IPFilterMiddleware is a class that can be registered in the API project, it will stop all API calls from non local IP-adresses.
 
@@ -50,6 +50,13 @@ Ideas for the future
 2. Or in containers/docker
 3. Add support for MQTT, both sending and receiving
 4. Add new Web-pages with information / stuff that makes sense for your project needs
+
+Getting started / Setup
+1. The projects are configured to use localhost - API project at port 4200. If you run both web and API locally, you can use Kestrel for both. If you want to access the Marvin Blazor Web from internet, use HTTPS/SSL and host using IIS ( or whats best on your platform )
+2. Check the AppSettings.json for the projects, the Path for SQLite LogDB is essential.
+3. I run the Marvin API locally, using Kestrel - and I let it start on the current machines IP + port 4200, uncomment the code on line 20-24 in Program.cs (Marvin API) if you want to do the same
+4. The user in the Identity database is: Marvin@log.com / Marvin42!
+5. Make sure you change password / makes a new user before exposing the Web to Internet.
 
 Have Fun!
 
