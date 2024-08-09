@@ -20,7 +20,7 @@ So what is this? It is a simple .NET 8 Blazor ServerApp project + ASP Net Core M
 
 The solution is divided into two projects, one serversideproject Webproject, with identity enabled and one API project. 
 
-##The API:s included are:
+### The API:s included are:
 
 1. LOG (GET) - simplest way to commit a new LogEntry to the monitor(webApp). The class used is "LogEntry" - modify it as you see fit. If you only send a single string as LogEntry, a new LogEntry will be created and the single string will be set as "Message"
 2. LOG (POST) - same as above, but made for POST requests
@@ -31,21 +31,21 @@ The API:s can be viewed in Swagger using URL: https://localhost:port/swagger
 
 Included are also some client-test code, one micropython file showing how to use both the GET and POST version of LOG - and a .HTTP file that can be used for testing in VS2022 or VS Code. In the python file, don't forget to **set your own WiFi config!**
 
-## Requirements:
+### Requirements:
 
 1. NET 8 SDK
 2. VS 2022 Community or better / VS Code with C# Dev Kit
 3. If you are going to call API:s from other devices, - you must host Project Marvin API so it gets an IP number - not "localhost". If you only use it locally in your internal network
 4. SQLite Database - can be run on all platforms
 
-## Coding stuff:
+### Coding stuff:
 1. QuickGrid uses Scoped CSS to style the headers and lines. "Home.razor.css" - ::deep is for selection the QuickGrid scope. For this to work, the Quickgrid must be contained in a container, like a DIV tag
 2. API Project have an Attribute-class for checking "API KEY" - it is not used right now, but can easily be added to all endpoints
 3. Blazor Server App - have some "smart" code to reconnect to SignalR that is run in the API project. A green or red symnbol is shown when connected/disconnected. The code for this is in the Home.razor.cs in the Project Marvin project
 4. Identity is enabled - also using SQLite. You can add the [Authorize] keyword to all pages you want to require login. I'm having it on the Register page - so no one can register a new account without already being logged in.
 5. IPFilterMiddleware is a class that can be registered in the API project, it will stop all API calls from non local IP-adresses.
 
-## Ideas for the future
+### Ideas for the future
 1. You can host the solultion in the cloud if you like
 2. Or in containers/docker
 3. Add support for MQTT, both sending and receiving
@@ -57,6 +57,7 @@ Included are also some client-test code, one micropython file showing how to use
 3. I run the Marvin API locally, using Kestrel - and I let it start on the current machines IP + port 4200, uncomment the code on line 20-24 in Program.cs (Marvin API) if you want to do the same
 4. The user in the Identity database is: Marvin@log.com / Marvin42!
 5. Make sure you change password / makes a new user before exposing the Web to Internet.
+6. In Marvin API Project, there is a folder named "Example code". There you'll find som micropyhton code that I have tested on my RPi Pico W and some examples of using CURL and Powershell to send LogEntries. The python code is divided into two files, "Test MarvinAPI.py", here you need to fill in your Wifi Details - and "logapi.py", here you will have to provide the URL to the API (you can't use localhost since the Pico is another computer).
 
 Have Fun!
 
