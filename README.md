@@ -2,7 +2,7 @@
 ![image](https://github.com/user-attachments/assets/b771f6d0-8388-4f57-8ed8-1e10e1823699)
 *This is my usecase - I need to log/collect info from lots of different devices and computers.*
 
-![image](https://github.com/user-attachments/assets/a22cdd5a-4260-4ec6-9077-599e77117867)
+![image](https://github.com/user-attachments/assets/c4321b08-d071-41a7-a266-3b2693ec8c89)
 *This is the Blazor Server WebApp, logged in as Marvin@log.com*
 
 ![image](https://github.com/user-attachments/assets/a786a21d-4e2b-4603-a61c-4b63babecb4d)
