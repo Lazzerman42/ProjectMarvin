@@ -1,0 +1,33 @@
+@baseUrl =https://localhost:4200/Api/Log
+@baseProd = http://192.168.x.xx/Api/Log
+
+# When using localhost, no SENDER-IP adress can be resolved
+
+GET {{baseUrl}}/A+Get+Log+Reuest+to+create+a+simple+Log+entry
+
+####
+
+GET {{baseProd}}/A+Get+Log+Reuest+to+create+a+simple+Log+entry
+
+####
+GET {{baseUrl}}/ExampleApp/A+Get+Log+Reuest+to+create+a+simple+Log+entry+SpecialApp
+
+### Send LogEntry post
+POST {{baseUrl}}
+
+{
+    "sender" : "VS Test API",
+    "logtype": "Info",
+    "Message": "Here are some important stuff to know..."    
+}
+### Send LogEntry post
+POST {{baseProd}}
+
+{
+    "sender" : "VS Test API",
+    "logtype": "Info",
+    "Message": "Here are some important stuff to know..."    
+}
+
+
+

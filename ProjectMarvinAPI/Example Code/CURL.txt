@@ -1,0 +1,25 @@
+﻿**************************************************
+Commandline CURL windows
+**************************************************
+
+curl -X POST "https://localhost:4200/Api/Log" -H "Content-Type: application/json" -d "{\"sender\":\"CURL\",\"logtype\":\"Info\",\"Message\":\"CURL Says hello to Marvin API\"}"
+
+curl -X POST "https://localhost:4200/Api/Log" ^
+-H "Content-Type: application/json" ^
+-d "{\"sender\":\"CURL\",\"logtype\":\"Info\",\"Message\":\"Multiline CURL is here\"}"
+
+
+**************************************************
+For Powershell (7.4.x)
+**************************************************
+
+$body = @{
+    sender = "PS Curl"
+    logtype = "Info"
+    Message = "PS Curl can also send stuff"
+}
+
+Invoke-RestMethod -Method Post -Uri 'https://localhost:4200/Api/Log' `
+-ContentType 'application/json' `
+-Body ($body | ConvertTo-Json)
+

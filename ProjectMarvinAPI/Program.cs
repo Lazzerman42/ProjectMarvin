@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
 using System.Text.Json;
+using System.Web;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
@@ -62,7 +63,7 @@ app.MapGet("/api/protected", [RequireApiKey] () =>
 // but it is a good fit for many small-footprint IoT boards with limited power
 app.MapGet("api/Log/{message}", async (string message, HttpContext context) =>
 {
-	await HandleLogRequestAsync(context, message, app.Services);
+	await HandleLogRequestAsync(context, HttpUtility.UrlDecode(message), app.Services);
 
 	return TypedResults.Created(DateTime.Now + " : " + " : " + message);
 })
@@ -88,7 +89,7 @@ app.MapGet("api/Log/ExampleApp/{message}", async (string message, HttpContext co
 {
 	// Here the last arguemnt(optional) is the Sender - we set it to "Magical App", this mean you can 
 	// make simple bash/shell/powershell etc with special endpoints with prearranged attributes if you like
-	await HandleLogRequestAsync(context, message, app.Services, "Sent by The magical App");
+	await HandleLogRequestAsync(context, HttpUtility.UrlDecode(message), app.Services, "Magical App");
 
 	return DateTime.Now + " : " + " : " + message;
 })
