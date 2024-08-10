@@ -16,7 +16,7 @@ builder.Services.AddSingleton<LogHub>(); // Serverside of SignalR
 // DBContextFactory for SQLite LogData database
 var LogDataConnection = builder.Configuration.GetConnectionString("LogDataConnection");
 builder.Services.AddDbContextFactory<ApplicationDbContextLogData>(options =>
-		options.UseSqlite(LogDataConnection));
+    options.UseSqlite(LogDataConnection));
 
 // Start API on this machines IP-Adress on port 4200
 //builder.WebHost.ConfigureKestrel(serverOptions =>
@@ -31,21 +31,21 @@ app.MapHub<LogHub>("/loghub");
 
 if (app.Environment.IsDevelopment())
 {
-	app.UseSwagger();
-	app.UseSwaggerUI();
+  app.UseSwagger();
+  app.UseSwaggerUI();
 }
 
 static string GetLocalIPAddress()
 {
-	var host = Dns.GetHostEntry(Dns.GetHostName());
-	foreach (var ip in host.AddressList)
-	{
-		if (ip.AddressFamily == AddressFamily.InterNetwork)
-		{
-			return ip.ToString();
-		}
-	}
-	throw new Exception("No network adapters with an IPv4 address in the system!");
+  var host = Dns.GetHostEntry(Dns.GetHostName());
+  foreach (var ip in host.AddressList)
+  {
+    if (ip.AddressFamily == AddressFamily.InterNetwork)
+    {
+      return ip.ToString();
+    }
+  }
+  throw new Exception("No network adapters with an IPv4 address in the system!");
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -53,7 +53,7 @@ static string GetLocalIPAddress()
 
 app.MapGet("/api/protected", [RequireApiKey] () =>
 {
-	return "This endpoint is protected by API Key";
+  return "This endpoint is protected by API Key";
 })
 .RequireApiKey()
 .WithName("GetProtectedData")
@@ -63,9 +63,9 @@ app.MapGet("/api/protected", [RequireApiKey] () =>
 // but it is a good fit for many small-footprint IoT boards with limited power
 app.MapGet("api/Log/{message}", async (string message, HttpContext context) =>
 {
-	await HandleLogRequestAsync(context, HttpUtility.UrlDecode(message), app.Services);
+  await HandleLogRequestAsync(context, HttpUtility.UrlDecode(message), app.Services);
 
-	return TypedResults.Created(DateTime.Now + " : " + " : " + message);
+  return TypedResults.Created(DateTime.Now + " : " + " : " + message);
 })
 .WithName("Log")
 .WithOpenApi();
@@ -73,11 +73,11 @@ app.MapGet("api/Log/{message}", async (string message, HttpContext context) =>
 // Get LogCount - mostly used to chech that the Databasefile is found :-)
 app.MapGet("api/LogCount", async (IServiceProvider services) =>
 {
-	using var scope = services.CreateScope();
-	var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContextLogData>();
-	int count = await db.LogEntries.CountAsync();
+  using var scope = services.CreateScope();
+  var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContextLogData>();
+  int count = await db.LogEntries.CountAsync();
 
-	return TypedResults.Ok($"Database LogEntries Count:{count}");
+  return TypedResults.Ok($"Database LogEntries Count:{count}");
 })
 .WithName("LogCount")
 .WithOpenApi();
@@ -87,11 +87,11 @@ app.MapGet("api/LogCount", async (IServiceProvider services) =>
 // a special Application - so you can set default values for just that APP. Here we set the Sender attribute
 app.MapGet("api/Log/ExampleApp/{message}", async (string message, HttpContext context) =>
 {
-	// Here the last arguemnt(optional) is the Sender - we set it to "Magical App", this mean you can 
-	// make simple bash/shell/powershell etc with special endpoints with prearranged attributes if you like
-	await HandleLogRequestAsync(context, HttpUtility.UrlDecode(message), app.Services, "Magical App");
+  // Here the last arguemnt(optional) is the Sender - we set it to "Magical App", this mean you can 
+  // make simple bash/shell/powershell etc with special endpoints with prearranged attributes if you like
+  await HandleLogRequestAsync(context, HttpUtility.UrlDecode(message), app.Services, "Magical App");
 
-	return DateTime.Now + " : " + " : " + message;
+  return DateTime.Now + " : " + " : " + message;
 })
 .WithName("LogExampleApp")
 .WithOpenApi();
@@ -99,22 +99,22 @@ app.MapGet("api/Log/ExampleApp/{message}", async (string message, HttpContext co
 // Receive new LogEntry via Form POST
 app.MapPost("api/Log/", async (HttpRequest request, HttpContext context) =>
 {
-	var body = new StreamReader(request.Body);
-	string postData = await body.ReadToEndAsync();
-	Dictionary<string, dynamic> keyValuePairs = JsonSerializer.Deserialize<Dictionary<string, dynamic>>(postData) ?? new Dictionary<string, dynamic>();
+  var body = new StreamReader(request.Body);
+  string postData = await body.ReadToEndAsync();
+  Dictionary<string, dynamic> keyValuePairs = JsonSerializer.Deserialize<Dictionary<string, dynamic>>(postData) ?? new Dictionary<string, dynamic>();
 
-	var callerIpAddress = context.Connection.RemoteIpAddress?.ToString();
+  var callerIpAddress = context.Connection.RemoteIpAddress?.ToString();
 
-	await HandleLogRequestAsync(context, postData, app.Services);
-	return await Task.FromResult<string>(postData);
+  await HandleLogRequestAsync(context, postData, app.Services);
+  return await Task.FromResult<string>(postData);
 });
 
 // ECHO function - you can use this to check that WiFi is working as expected(ie send something known,
 // and compare the returned result. 
 app.MapGet("api/Echo/{message}", (string message, HttpContext context) =>
 {
-	// var callerIpAddress = context.Connection.RemoteIpAddress?.ToString();
-	return message;
+  // var callerIpAddress = context.Connection.RemoteIpAddress?.ToString();
+  return message;
 })
 .WithName("Echo")
 .WithOpenApi();
@@ -123,50 +123,50 @@ app.MapGet("api/Echo/{message}", (string message, HttpContext context) =>
 // but no way to set the time at Boot - so I use this API Call to set the date/time on my RPI Pico W:s
 app.MapGet("api/GetLocalTime", string (HttpContext context) =>
 {
-	// Local time for Sweden - I use this for my RPi Pico W:s
-	// Change CultureInfo to fit your needs
-	var currentTime = DateTimeOffset.Now;
-	var formattedTime = currentTime.ToString("O", new CultureInfo("sv-SE"));
+  // Local time for Sweden - I use this for my RPi Pico W:s
+  // Change CultureInfo to fit your needs
+  var currentTime = DateTimeOffset.Now;
+  var formattedTime = currentTime.ToString("O", new CultureInfo("sv-SE"));
 
-	return formattedTime;
+  return formattedTime;
 });
 // Common logic for handling the Log-requests
 
 static async Task SaveLogEntryAsync(IServiceProvider services, LogEntry logEntry)
 {
-	using var scope = services.CreateScope();
-	var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContextLogData>();
-	await db.LogEntries.AddAsync(logEntry);
-	await db.SaveChangesAsync();
+  using var scope = services.CreateScope();
+  var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContextLogData>();
+  await db.LogEntries.AddAsync(logEntry);
+  await db.SaveChangesAsync();
 
 }
 // Main method for handling saving of LogEntries 
 static async Task HandleLogRequestAsync(HttpContext context, string postData, IServiceProvider services, string sender = "")
 {
-	var callerIpAddress = context.Connection.RemoteIpAddress?.ToString();
+  var callerIpAddress = context.Connection.RemoteIpAddress?.ToString();
 
-	using (var scope = services.CreateScope())
-	{
-		var logHub = scope.ServiceProvider.GetRequiredService<LogHub>();
+  using (var scope = services.CreateScope())
+  {
+    var logHub = scope.ServiceProvider.GetRequiredService<LogHub>();
 
-		//var logEntries = scope.ServiceProvider.GetRequiredService<LogEntries>();
-		LogEntry logEntry = LogEntry.Load(postData);
-		logEntry.IPAdress = callerIpAddress;
+    //var logEntries = scope.ServiceProvider.GetRequiredService<LogEntries>();
+    LogEntry logEntry = LogEntry.Load(postData);
+    logEntry.IPAdress = callerIpAddress;
 
-		if (logEntry.LogDate == null)
-			logEntry.LogDate = DateTime.Now;
-		if (sender != "")
-			logEntry.Sender = sender;
+    if (logEntry.LogDate == null)
+      logEntry.LogDate = DateTime.Now;
+    if (sender != "")
+      logEntry.Sender = sender;
 
-		if (string.IsNullOrEmpty(logEntry.LogType))
-			logEntry.LogType = "Info";
+    if (string.IsNullOrEmpty(logEntry.LogType))
+      logEntry.LogType = "Info";
 
-		//logEntries?.messages?.Add(logEntry);
+    //logEntries?.messages?.Add(logEntry);
 
-		await SaveLogEntryAsync(services, logEntry);
+    await SaveLogEntryAsync(services, logEntry);
 
-		await logHub.SendLogUpdate();
-	}
+    await logHub.SendLogUpdate();
+  }
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
