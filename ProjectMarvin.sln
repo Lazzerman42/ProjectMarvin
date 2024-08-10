@@ -8,6 +8,9 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProjectMarvinAPI", "ProjectMarvinAPI\ProjectMarvinAPI.csproj", "{472858D7-A621-41A2-AAED-5530CB92764C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{58B0FB10-645C-4673-87C6-B666EB1662DF}"
+	ProjectSection(SolutionItems) = preProject
+		Databases\SQLiteLogData.db = Databases\SQLiteLogData.db
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
