@@ -61,13 +61,17 @@ h1:focus {
 	width: 100%;
 }
 
+.col-title {
+	padding: 0 !important;
+}
+
 .LogDate {
 	width: fit-content;
 	padding: 0 !important;
 }
 .LogType {
 	width: 80px;
-	padding: 0px 0px 0px 0px !important;
+	padding: 0 !important;
 }
 
 .LogSender {
