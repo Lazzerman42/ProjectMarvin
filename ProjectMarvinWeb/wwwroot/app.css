@@ -62,18 +62,22 @@ h1:focus {
 }
 
 .LogDate {
-	width: 160px;
+	width: fit-content;
+	padding: 0 !important;
 }
 .LogType {
 	width: 80px;
+	padding: 0px 0px 0px 0px !important;
 }
 
 .LogSender {
 	width: 180px;
+	padding: 0 !important;
 }
 
 .grid-container {
 	width: 650px;
+	padding: 0 !important;
 }
 
 .BtnLeft {
