@@ -33,9 +33,9 @@ public class LogEntry
         }
         ) ?? new LogEntry(JSONString);
 
-      string decodedString = HttpUtility.UrlDecode(logEntry.Message ?? "", Encoding.GetEncoding("utf-8"));
+      string decodedString = HttpUtility.UrlDecode(logEntry.Message ?? "", Encoding.GetEncoding("iso-8859-1"));
       logEntry.Message = decodedString;
-      string decodedStringSender = HttpUtility.UrlDecode(logEntry.Sender ?? "", Encoding.GetEncoding("utf-8"));
+      string decodedStringSender = HttpUtility.UrlDecode(logEntry.Sender ?? "", Encoding.GetEncoding("iso-8859-1"));
       logEntry.Sender = decodedStringSender;
       return logEntry;
     }
