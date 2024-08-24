@@ -1,3 +1,4 @@
+using Marvin.Common;
 using Microsoft.EntityFrameworkCore;
 using ProjectMarvinAPI.Data;
 using ProjectMarvinAPI.Hubs;

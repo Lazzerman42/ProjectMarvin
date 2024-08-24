@@ -2,6 +2,7 @@
 using System.Text.Json;
 using System.Web;
 
+namespace Marvin.Common;
 public class LogEntry
 {
   public int Id { get; set; }

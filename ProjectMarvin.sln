@@ -4,13 +4,21 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.10.35122.118
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProjectMarvin", "ProjectMarvinWeb\ProjectMarvin.csproj", "{E2FCA39E-11AD-4543-87B8-9BEC3D6B5649}"
+	ProjectSection(ProjectDependencies) = postProject
+		{C94766D3-3F4E-4215-93DD-07A5E081487D} = {C94766D3-3F4E-4215-93DD-07A5E081487D}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProjectMarvinAPI", "ProjectMarvinAPI\ProjectMarvinAPI.csproj", "{472858D7-A621-41A2-AAED-5530CB92764C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{C94766D3-3F4E-4215-93DD-07A5E081487D} = {C94766D3-3F4E-4215-93DD-07A5E081487D}
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{58B0FB10-645C-4673-87C6-B666EB1662DF}"
 	ProjectSection(SolutionItems) = preProject
 		Databases\SQLiteLogData.db = Databases\SQLiteLogData.db
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csproj", "{C94766D3-3F4E-4215-93DD-07A5E081487D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -26,6 +34,10 @@ Global
 		{472858D7-A621-41A2-AAED-5530CB92764C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{472858D7-A621-41A2-AAED-5530CB92764C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{472858D7-A621-41A2-AAED-5530CB92764C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C94766D3-3F4E-4215-93DD-07A5E081487D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C94766D3-3F4E-4215-93DD-07A5E081487D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C94766D3-3F4E-4215-93DD-07A5E081487D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C94766D3-3F4E-4215-93DD-07A5E081487D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
