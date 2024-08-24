@@ -10,7 +10,7 @@ public class LogEntry
   public string LogDateSE => LogDate?.ToString("yyyy-MM-dd HH:mm:ss") ?? "";
   public string? IPAdress { get; set; }
   public string? Sender { get; set; }
-  public string LogType { get; set; }
+  public string? LogType { get; set; } = "Info";
 
   public LogEntry(string msg)
   {
