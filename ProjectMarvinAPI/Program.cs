@@ -5,7 +5,6 @@ using ProjectMarvinAPI.Hubs;
 using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
-using System.Text.Json;
 using System.Web;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,10 +19,10 @@ builder.Services.AddDbContextFactory<ApplicationDbContextLogData>(options =>
     options.UseSqlite(LogDataConnection));
 
 // Start API on this machines IP-Adress on port 4200
-//builder.WebHost.ConfigureKestrel(serverOptions =>
-//{
-//	serverOptions.Listen(IPAddress.Parse(GetLocalIPAddress()), 4200);
-//});
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+  serverOptions.Listen(IPAddress.Parse(GetLocalIPAddress()), 4200);
+});
 
 var app = builder.Build();
 
@@ -46,7 +45,7 @@ static string GetLocalIPAddress()
       return ip.ToString();
     }
   }
-  throw new Exception("No network adapters with an IPv4 address in the system!");
+  throw new System.Net.Sockets.SocketException(1, "No network adapters with an IPv4 address in the system!");
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -102,9 +101,6 @@ app.MapPost("api/Log/", async (HttpRequest request, HttpContext context) =>
 {
   var body = new StreamReader(request.Body);
   string postData = await body.ReadToEndAsync();
-  Dictionary<string, dynamic> keyValuePairs = JsonSerializer.Deserialize<Dictionary<string, dynamic>>(postData) ?? new Dictionary<string, dynamic>();
-
-  var callerIpAddress = context.Connection.RemoteIpAddress?.ToString();
 
   await HandleLogRequestAsync(context, postData, app.Services);
   return await Task.FromResult<string>(postData);
@@ -114,7 +110,6 @@ app.MapPost("api/Log/", async (HttpRequest request, HttpContext context) =>
 // and compare the returned result. 
 app.MapGet("api/Echo/{message}", (string message, HttpContext context) =>
 {
-  // var callerIpAddress = context.Connection.RemoteIpAddress?.ToString();
   return message;
 })
 .WithName("Echo")
@@ -150,7 +145,6 @@ static async Task HandleLogRequestAsync(HttpContext context, string postData, IS
   {
     var logHub = scope.ServiceProvider.GetRequiredService<LogHub>();
 
-    //var logEntries = scope.ServiceProvider.GetRequiredService<LogEntries>();
     LogEntry logEntry = LogEntry.Load(postData);
     logEntry.IPAdress = callerIpAddress;
 
@@ -162,8 +156,6 @@ static async Task HandleLogRequestAsync(HttpContext context, string postData, IS
     if (string.IsNullOrEmpty(logEntry.LogType))
       logEntry.LogType = "Info";
 
-    //logEntries?.messages?.Add(logEntry);
-
     await SaveLogEntryAsync(services, logEntry);
 
     await logHub.SendLogUpdate();
@@ -171,5 +163,5 @@ static async Task HandleLogRequestAsync(HttpContext context, string postData, IS
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
-///
+
 app.Run();

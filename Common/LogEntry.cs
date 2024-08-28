@@ -34,7 +34,7 @@ public class LogEntry
         }
         ) ?? new LogEntry(JSONString);
 
-      string decodedString = HttpUtility.UrlDecode(logEntry.Message, Encoding.GetEncoding("iso-8859-1"));
+      string decodedString = HttpUtility.UrlDecode(logEntry.Message ?? "", Encoding.GetEncoding("iso-8859-1"));
       logEntry.Message = decodedString;
       logEntry.Sender = HttpUtility.UrlDecode(logEntry.Sender, Encoding.GetEncoding("iso-8859-1"));
       return logEntry;

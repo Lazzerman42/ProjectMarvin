@@ -42,19 +42,17 @@ public partial class Home : ComponentBase, IAsyncDisposable
 
   [Inject]
   public IDbContextFactory<ApplicationDbContextLogData>? _LogDBFactory { get; set; } // Factory is used to get our DBContext
-  public ApplicationDbContextLogData? _LogDB; // Will be created from Factory
+  private ApplicationDbContextLogData? _LogDB; // Will be created from Factory
 
   [Inject] // Read the SignalR URL from config
   IConfiguration? Configuration { get; set; }
   [Inject]
-  public NavigationManager NavMan { get; set; }
-  //[Inject]
-  //public LogEntries logEntries { get; set; }
+  public NavigationManager? NavMan { get; set; }
 
   private string? searchMessageFilter = "",
                   searchSenderFilter = "";
 
-  private QuickGrid<LogEntry> myLogGrid; // Our UI QuickGrid reference
+  private QuickGrid<LogEntry>? myLogGrid; // Our UI QuickGrid reference
 
   private bool showDialog = false;
   private bool showDistinct = false;
@@ -112,7 +110,12 @@ public partial class Home : ComponentBase, IAsyncDisposable
   {
     get
     {
-      var result = _LogDB.LogEntries.AsQueryable();
+      if (_LogDB is null)
+        return new List<LogEntry>().AsQueryable();
+
+      IQueryable<LogEntry>? result;
+      result = _LogDB.LogEntries.AsQueryable();
+
       // If we have Search keywords
       if (!string.IsNullOrEmpty(searchMessageFilter) || !string.IsNullOrEmpty(searchSenderFilter))
       {
@@ -134,7 +137,7 @@ public partial class Home : ComponentBase, IAsyncDisposable
                   }).AsQueryable();
         // The resulting list here contains all data from the LogEntry, could be used to set an alarm 
         // if the last logPost is older than XXX....
-        result = (IQueryable<LogEntry>)_LogDB.LogEntries
+        result = _LogDB.LogEntries
          .Where(l => latestDates.Any(ld =>
              ld.IPAdress == l.IPAdress &&
              ld.Sender == l.Sender &&
@@ -184,7 +187,7 @@ public partial class Home : ComponentBase, IAsyncDisposable
       _LogDB = await _LogDBFactory.CreateDbContextAsync();
 
     hubConnection = new HubConnectionBuilder()
-        .WithUrl(Configuration.GetConnectionString("SignalRAPI"))
+        .WithUrl(Configuration?.GetConnectionString("SignalRAPI") ?? "")
         .Build();
 
     hubConnection.Closed += HubConnection_Closed;
@@ -262,8 +265,11 @@ public partial class Home : ComponentBase, IAsyncDisposable
   {
     await InvokeAsync(async () =>
     {
-      await myLogGrid.RefreshDataAsync();
-      StateHasChanged();
+      if (myLogGrid is not null)
+      {
+        await myLogGrid.RefreshDataAsync();
+        StateHasChanged();
+      }
     });
   }
   /// <summary>

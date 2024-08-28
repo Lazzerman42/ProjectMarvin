@@ -24,10 +24,9 @@ public class ApiKeyEndpointFilter : IEndpointFilter
 
     var apiKey = _configuration.GetValue<string>("ApiKey");
 
-    if (!apiKey.Equals(extractedApiKey))
-    {
+    if ((apiKey is not null) && (!apiKey.Equals(extractedApiKey)))
       return Results.Unauthorized();
-    }
+
 
     return await next(context);
   }
