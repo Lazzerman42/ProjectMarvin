@@ -1,6 +1,8 @@
 ﻿
 using Marvin.Common;
 
+namespace ProjectMarvinAPI.Model;
+
 /// <summary>
 /// Not used right now, can be used as a SQLite replacement - for in memory use with total control
 /// </summary>

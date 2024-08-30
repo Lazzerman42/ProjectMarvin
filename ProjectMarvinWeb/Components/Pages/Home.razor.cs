@@ -35,14 +35,14 @@ namespace ProjectMarvin.Components.Pages;
 /// </summary>
 public partial class Home : ComponentBase, IAsyncDisposable
 {
-  PaginationState pagination = new PaginationState { ItemsPerPage = 42 };
-  public bool IsConnected => hubConnection?.State == HubConnectionState.Connected; // For displaying the connected / disconneced symbol
+  private readonly PaginationState _pagination = new() { ItemsPerPage = 42 };
+  public bool IsConnected => _hubConnection?.State == HubConnectionState.Connected; // For displaying the connected / disconneced symbol
 
-  private HubConnection? hubConnection; // For our SignalR connection to the API
+  private HubConnection? _hubConnection; // For our SignalR connection to the API
 
   [Inject]
-  public IDbContextFactory<ApplicationDbContextLogData>? _LogDBFactory { get; set; } // Factory is used to get our DBContext
-  private ApplicationDbContextLogData? _LogDB; // Will be created from Factory
+  public IDbContextFactory<ApplicationDbContextLogData>? LogDBFactory { get; set; } // Factory is used to get our DBContext
+  private ApplicationDbContextLogData? _logDB; // Will be created from Factory
 
   [Inject] // Read the SignalR URL from config
   IConfiguration? Configuration { get; set; }
@@ -106,15 +106,16 @@ public partial class Home : ComponentBase, IAsyncDisposable
   /// <summary>
   /// Datasource for the Quickgrid. Uses SQLite database and entityframework
   /// </summary>
+  [System.Diagnostics.CodeAnalysis.SuppressMessage("Roslynator", "RCS1155:Use StringComparison when comparing strings", Justification = "<Pending>")]
   IQueryable<LogEntry> FilteredLog
   {
     get
     {
-      if (_LogDB is null)
+      if (_logDB is null)
         return new List<LogEntry>().AsQueryable();
 
       IQueryable<LogEntry>? result;
-      result = _LogDB.LogEntries.AsQueryable();
+      result = _logDB.LogEntries.AsQueryable();
 
       // If we have Search keywords
       if (!string.IsNullOrEmpty(searchMessageFilter) || !string.IsNullOrEmpty(searchSenderFilter))
@@ -127,7 +128,7 @@ public partial class Home : ComponentBase, IAsyncDisposable
       // Uses IPAdress + Sender to get a list of Distinct Log "devices", diplays there latest post
       if (showDistinct) // Toggled by Button in UI
       {
-        var latestDates = _LogDB.LogEntries
+        var latestDates = _logDB.LogEntries
                   .GroupBy(l => new { l.IPAdress, l.Sender })
                   .Select(g => new
                   {
@@ -137,7 +138,7 @@ public partial class Home : ComponentBase, IAsyncDisposable
                   }).AsQueryable();
         // The resulting list here contains all data from the LogEntry, could be used to set an alarm 
         // if the last logPost is older than XXX....
-        result = _LogDB.LogEntries
+        result = _logDB.LogEntries
          .Where(l => latestDates.Any(ld =>
              ld.IPAdress == l.IPAdress &&
              ld.Sender == l.Sender &&
@@ -160,9 +161,9 @@ public partial class Home : ComponentBase, IAsyncDisposable
 
     try
     {
-      if (hubConnection != null)
+      if (_hubConnection != null)
       {
-        await hubConnection.StartAsync();
+        await _hubConnection.StartAsync();
         Console.WriteLine("SignalR connected.");
         await UpdateData();
       }
@@ -183,19 +184,16 @@ public partial class Home : ComponentBase, IAsyncDisposable
   /// <returns></returns>
   private async Task StartLogHub()
   {
-    if (_LogDBFactory is not null)
-      _LogDB = await _LogDBFactory.CreateDbContextAsync();
+    if (LogDBFactory is not null)
+      _logDB = await LogDBFactory.CreateDbContextAsync();
 
-    hubConnection = new HubConnectionBuilder()
+    _hubConnection = new HubConnectionBuilder()
         .WithUrl(Configuration?.GetConnectionString("SignalRAPI") ?? "")
         .Build();
 
-    hubConnection.Closed += HubConnection_Closed;
+    _hubConnection.Closed += HubConnection_Closed;
 
-    hubConnection.On("ReceiveLogUpdate", async () =>
-    {
-      await UpdateData();
-    });
+    _hubConnection.On("ReceiveLogUpdate", async () => await UpdateData());
   }
   /// <summary>
   /// If Client detects SignalR connection is lost, connect again
@@ -221,9 +219,9 @@ public partial class Home : ComponentBase, IAsyncDisposable
     {
       try
       {
-        if (hubConnection != null)
+        if (_hubConnection != null)
         {
-          await hubConnection.StartAsync();
+          await _hubConnection.StartAsync();
           await UpdateData();
         }
         else
@@ -253,7 +251,7 @@ public partial class Home : ComponentBase, IAsyncDisposable
   /// <returns></returns>
   public async Task DeleteLogTableData()
   {
-    await _LogDB!.Database.ExecuteSqlRawAsync("DELETE FROM LogEntries");
+    await _logDB!.Database.ExecuteSqlRawAsync("DELETE FROM LogEntries");
     await UpdateData();
   }
   /// <summary>
@@ -278,14 +276,15 @@ public partial class Home : ComponentBase, IAsyncDisposable
   /// <returns></returns>
   public async ValueTask DisposeAsync()
   {
-    if (hubConnection is not null)
+    if (_hubConnection is not null)
     {
-      hubConnection.Closed -= HubConnection_Closed;
-      await hubConnection.DisposeAsync();
+      _hubConnection.Closed -= HubConnection_Closed;
+      await _hubConnection.DisposeAsync();
     }
-    if (_LogDB is not null)
+    if (_logDB is not null)
     {
-      await _LogDB.DisposeAsync();
+      await _logDB.DisposeAsync();
     }
+    GC.SuppressFinalize(this);
   }
 }

@@ -2,6 +2,7 @@ using Marvin.Common;
 using Microsoft.EntityFrameworkCore;
 using ProjectMarvinAPI.Data;
 using ProjectMarvinAPI.Hubs;
+using ProjectMarvinAPI.Middleware;
 using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
@@ -19,10 +20,7 @@ builder.Services.AddDbContextFactory<ApplicationDbContextLogData>(options =>
     options.UseSqlite(LogDataConnection));
 
 // Start API on this machines IP-Adress on port 4200
-builder.WebHost.ConfigureKestrel(serverOptions =>
-{
-  serverOptions.Listen(IPAddress.Parse(GetLocalIPAddress()), 4200);
-});
+builder.WebHost.ConfigureKestrel(serverOptions => serverOptions.Listen(IPAddress.Parse(GetLocalIPAddress()), 4200));
 
 var app = builder.Build();
 
@@ -50,11 +48,7 @@ static string GetLocalIPAddress()
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 /// Here we will map our Minimal API Endpoints
-
-app.MapGet("/api/protected", [RequireApiKey] () =>
-{
-  return "This endpoint is protected by API Key";
-})
+app.MapGet("/api/protected", [RequireApiKey] () => "This endpoint is protected by API Key")
 .RequireApiKey()
 .WithName("GetProtectedData")
 .WithOpenApi();
@@ -65,7 +59,7 @@ app.MapGet("api/Log/{message}", async (string message, HttpContext context) =>
 {
   await HandleLogRequestAsync(context, HttpUtility.UrlDecode(message), app.Services);
 
-  return TypedResults.Created(DateTime.Now + " : " + " : " + message);
+  return TypedResults.Created($"{DateTime.Now} : {message}");
 })
 .WithName("Log")
 .WithOpenApi();
@@ -82,7 +76,6 @@ app.MapGet("api/LogCount", async (IServiceProvider services) =>
 .WithName("LogCount")
 .WithOpenApi();
 
-
 // This is an Exmaple of a slightly modified simple GET, where you offer a special Endpoint for
 // a special Application - so you can set default values for just that APP. Here we set the Sender attribute
 app.MapGet("api/Log/ExampleApp/{message}", async (string message, HttpContext context) =>
@@ -91,7 +84,7 @@ app.MapGet("api/Log/ExampleApp/{message}", async (string message, HttpContext co
   // make simple bash/shell/powershell etc with special endpoints with prearranged attributes if you like
   await HandleLogRequestAsync(context, HttpUtility.UrlDecode(message), app.Services, "Magical App");
 
-  return DateTime.Now + " : " + " : " + message;
+  return $"{DateTime.Now} : {message}";
 })
 .WithName("LogExampleApp")
 .WithOpenApi();
@@ -108,16 +101,13 @@ app.MapPost("api/Log/", async (HttpRequest request, HttpContext context) =>
 
 // ECHO function - you can use this to check that WiFi is working as expected(ie send something known,
 // and compare the returned result. 
-app.MapGet("api/Echo/{message}", (string message, HttpContext context) =>
-{
-  return message;
-})
+app.MapGet("api/Echo/{message}", (string message) => message)
 .WithName("Echo")
 .WithOpenApi();
 
 // Get LocalTime - many small and simple devices don't have any Real time clock, or maybe they do have a RTC chip
 // but no way to set the time at Boot - so I use this API Call to set the date/time on my RPI Pico W:s
-app.MapGet("api/GetLocalTime", string (HttpContext context) =>
+app.MapGet("api/GetLocalTime", string () =>
 {
   // Local time for Sweden - I use this for my RPi Pico W:s
   // Change CultureInfo to fit your needs
@@ -134,34 +124,33 @@ static async Task SaveLogEntryAsync(IServiceProvider services, LogEntry logEntry
   var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContextLogData>();
   await db.LogEntries.AddAsync(logEntry);
   await db.SaveChangesAsync();
-
 }
 // Main method for handling saving of LogEntries 
 static async Task HandleLogRequestAsync(HttpContext context, string postData, IServiceProvider services, string sender = "")
 {
   var callerIpAddress = context.Connection.RemoteIpAddress?.ToString();
 
-  using (var scope = services.CreateScope())
-  {
-    var logHub = scope.ServiceProvider.GetRequiredService<LogHub>();
+  using var scope = services.CreateScope();
+  var logHub = scope.ServiceProvider.GetRequiredService<LogHub>();
 
-    LogEntry logEntry = LogEntry.Load(postData);
-    logEntry.IPAdress = callerIpAddress;
+  LogEntry logEntry = LogEntry.Load(postData);
+  logEntry.IPAdress = callerIpAddress;
 
-    if (logEntry.LogDate == null)
-      logEntry.LogDate = DateTime.Now;
-    if (sender != "")
-      logEntry.Sender = sender;
+  if (logEntry.LogDate == null)
+    logEntry.LogDate = DateTime.Now;
+  if (sender != "")
+    logEntry.Sender = sender;
 
-    if (string.IsNullOrEmpty(logEntry.LogType))
-      logEntry.LogType = "Info";
+  if (string.IsNullOrEmpty(logEntry.LogType))
+    logEntry.LogType = "Info";
 
-    await SaveLogEntryAsync(services, logEntry);
+  await SaveLogEntryAsync(services, logEntry);
 
-    await logHub.SendLogUpdate();
-  }
+  await logHub.SendLogUpdate();
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#pragma warning disable S6966 // Awaitable method should be used
 app.Run();
+#pragma warning restore S6966 // Awaitable method should be used
