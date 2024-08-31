@@ -2,7 +2,6 @@ using Marvin.Common;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.QuickGrid;
 using Microsoft.AspNetCore.SignalR.Client;
-using Microsoft.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using ProjectMarvin.Data;
 
@@ -49,43 +48,43 @@ public partial class Home : ComponentBase, IAsyncDisposable
   [Inject]
   public NavigationManager? NavMan { get; set; }
 
-  private string? searchMessageFilter = "",
-                  searchSenderFilter = "";
+  private string? _searchMessageFilter = "",
+                           _searchSenderFilter = "";
 
-  private QuickGrid<LogEntry>? myLogGrid; // Our UI QuickGrid reference
+  private QuickGrid<LogEntry>? _myLogGrid; // Our UI QuickGrid reference
 
-  private bool showDialog = false;
-  private bool showDistinct = false;
+  private bool _showDialog = false;
+  private bool _showDistinct = false;
   private void ShowConfirmDialog()
   {
-    showDialog = true;
+    _showDialog = true;
   }
   private void CloseDialog()
   {
-    showDialog = false;
+    _showDialog = false;
   }
   /// <summary>
   /// Displays Are you sure dialog - if YES - Deletes all logdata in SQLite
   /// </summary>
   /// <param name="confirmed"></param>
   /// <returns></returns>
-  private async Task HandleConfirmation(bool confirmed)
+  private async Task HandleConfirmationAsync(bool confirmed)
   {
-    showDialog = false;
+    _showDialog = false;
     if (confirmed)
     {
-      await DeleteLogTableData();
+      await DeleteLogTableDataAsync();
     }
   }
   /// <summary>
   /// Sets the Sender Title to include the search keyword
   /// </summary>
-  public string searchSenderFilterTitle
+  public string SearchSenderFilterTitle
   {
     get
     {
-      if (!string.IsNullOrEmpty(searchSenderFilter))
-        return "Sender : " + searchSenderFilter;
+      if (!string.IsNullOrEmpty(_searchSenderFilter))
+        return "Sender : " + _searchSenderFilter;
       else
         return "Sender";
     }
@@ -93,12 +92,12 @@ public partial class Home : ComponentBase, IAsyncDisposable
   /// <summary>
   /// Sets the Message Title to include the search keyword
   /// </summary>
-  public string searchMesssageFilterTitle
+  public string SearchMesssageFilterTitle
   {
     get
     {
-      if (!string.IsNullOrEmpty(searchMessageFilter))
-        return "Message : " + searchMessageFilter;
+      if (!string.IsNullOrEmpty(_searchMessageFilter))
+        return "Message : " + _searchMessageFilter;
       else
         return "Message";
     }
@@ -106,7 +105,6 @@ public partial class Home : ComponentBase, IAsyncDisposable
   /// <summary>
   /// Datasource for the Quickgrid. Uses SQLite database and entityframework
   /// </summary>
-  [System.Diagnostics.CodeAnalysis.SuppressMessage("Roslynator", "RCS1155:Use StringComparison when comparing strings", Justification = "<Pending>")]
   IQueryable<LogEntry> FilteredLog
   {
     get
@@ -114,19 +112,18 @@ public partial class Home : ComponentBase, IAsyncDisposable
       if (_logDB is null)
         return new List<LogEntry>().AsQueryable();
 
-      IQueryable<LogEntry>? result;
-      result = _logDB.LogEntries.AsQueryable();
+      IQueryable<LogEntry>? result = _logDB.LogEntries.AsQueryable();
 
       // If we have Search keywords
-      if (!string.IsNullOrEmpty(searchMessageFilter) || !string.IsNullOrEmpty(searchSenderFilter))
+      if (!string.IsNullOrEmpty(_searchMessageFilter) || !string.IsNullOrEmpty(_searchSenderFilter))
       {
         result = result.Where(l =>
-            (string.IsNullOrEmpty(searchMessageFilter) || l.Message!.ToUpper().Contains(searchMessageFilter.ToUpper())) &&
-            (string.IsNullOrEmpty(searchSenderFilter) || l.Sender!.ToUpper().Contains(searchSenderFilter.ToUpper()))
+            (string.IsNullOrEmpty(_searchMessageFilter) || l.Message!.Contains(_searchMessageFilter, StringComparison.CurrentCultureIgnoreCase)) &&
+            (string.IsNullOrEmpty(_searchSenderFilter) || l.Sender!.Contains(_searchSenderFilter, StringComparison.CurrentCultureIgnoreCase))
         );
       }
       // Uses IPAdress + Sender to get a list of Distinct Log "devices", diplays there latest post
-      if (showDistinct) // Toggled by Button in UI
+      if (_showDistinct) // Toggled by Button in UI
       {
         var latestDates = _logDB.LogEntries
                   .GroupBy(l => new { l.IPAdress, l.Sender })
@@ -149,15 +146,15 @@ public partial class Home : ComponentBase, IAsyncDisposable
     }
   }
   // The ShowDistincts per IP/Sender toggle
-  public async Task ShowDistincts()
+  public async Task ShowDistinctsAsync()
   {
-    showDistinct = !showDistinct; // Toggle view
+    _showDistinct = !_showDistinct; // Toggle view
 
-    await UpdateData();
+    await UpdateDataAsync();
   }
   protected override async Task OnInitializedAsync()
   {
-    await StartLogHub();
+    await StartLogHubAsync();
 
     try
     {
@@ -165,7 +162,7 @@ public partial class Home : ComponentBase, IAsyncDisposable
       {
         await _hubConnection.StartAsync();
         Console.WriteLine("SignalR connected.");
-        await UpdateData();
+        await UpdateDataAsync();
       }
     }
     catch (Exception ex) // If the SignalR/API is NOT started, let the page render before retrying connecting SignalR
@@ -173,7 +170,7 @@ public partial class Home : ComponentBase, IAsyncDisposable
       _ = Task.Run(async () =>
      {
        await Task.Delay(10000); // 10 seconds delay to let the page render
-       await SignalRRetry();
+       await SignalRRetryAsync();
      });
       Console.WriteLine($"Error connecting to SignalR: {ex.Message} Retrying");
     }
@@ -182,7 +179,7 @@ public partial class Home : ComponentBase, IAsyncDisposable
   /// Starts our SignalR hub(LogHub) and wires up the "event" when message "ReceiveLogUpdate" is received.
   /// </summary>
   /// <returns></returns>
-  private async Task StartLogHub()
+  private async Task StartLogHubAsync()
   {
     if (LogDBFactory is not null)
       _logDB = await LogDBFactory.CreateDbContextAsync();
@@ -191,26 +188,26 @@ public partial class Home : ComponentBase, IAsyncDisposable
         .WithUrl(Configuration?.GetConnectionString("SignalRAPI") ?? "")
         .Build();
 
-    _hubConnection.Closed += HubConnection_Closed;
+    _hubConnection.Closed += HubConnection_ClosedAsync;
 
-    _hubConnection.On("ReceiveLogUpdate", async () => await UpdateData());
+    _hubConnection.On("ReceiveLogUpdate", async () => await UpdateDataAsync());
   }
   /// <summary>
   /// If Client detects SignalR connection is lost, connect again
   /// </summary>
   /// <param name="arg"></param>
   /// <returns></returns>
-  private async Task HubConnection_Closed(Exception? arg)
+  private async Task HubConnection_ClosedAsync(Exception? arg)
   {
-    await SignalRRetry();
+    await SignalRRetryAsync();
 
     Console.WriteLine("Couldn't reconnect SignalR - check API/SignalR Hub - retrying");
   }
 
-  private async Task SignalRRetry()
+  private async Task SignalRRetryAsync()
   {
     Console.WriteLine("HUB Closed");
-    await UpdateData();
+    await UpdateDataAsync();
 
     const int maxRetryAttempts = 15;
     const int delayBetweenAttempts = 5000; // 10 sekunder i millisekunder
@@ -222,14 +219,14 @@ public partial class Home : ComponentBase, IAsyncDisposable
         if (_hubConnection != null)
         {
           await _hubConnection.StartAsync();
-          await UpdateData();
+          await UpdateDataAsync();
         }
         else
         {
-          await StartLogHub();
+          await StartLogHubAsync();
         }
         Console.WriteLine("Reconnected!");
-        await UpdateData();
+        await UpdateDataAsync();
         return;
       }
       catch (Exception ex)
@@ -239,7 +236,7 @@ public partial class Home : ComponentBase, IAsyncDisposable
         if (i < maxRetryAttempts - 1)
         {
           await Task.Delay(delayBetweenAttempts);
-          await UpdateData();
+          await UpdateDataAsync();
         }
       }
     }
@@ -249,23 +246,23 @@ public partial class Home : ComponentBase, IAsyncDisposable
   /// Deletes ALL logposts in the LogEntries Table in SQLite
   /// </summary>
   /// <returns></returns>
-  public async Task DeleteLogTableData()
+  public async Task DeleteLogTableDataAsync()
   {
     await _logDB!.Database.ExecuteSqlRawAsync("DELETE FROM LogEntries");
-    await UpdateData();
+    await UpdateDataAsync();
   }
   /// <summary>
   /// We must tell the Quickgrid to refresh its data and we must do it on the UI thread
   /// Hence the InvokeAsync code
   /// </summary>
   /// <returns></returns>
-  public async Task UpdateData()
+  public async Task UpdateDataAsync()
   {
     await InvokeAsync(async () =>
     {
-      if (myLogGrid is not null)
+      if (_myLogGrid is not null)
       {
-        await myLogGrid.RefreshDataAsync();
+        await _myLogGrid.RefreshDataAsync();
         StateHasChanged();
       }
     });
@@ -278,7 +275,7 @@ public partial class Home : ComponentBase, IAsyncDisposable
   {
     if (_hubConnection is not null)
     {
-      _hubConnection.Closed -= HubConnection_Closed;
+      _hubConnection.Closed -= HubConnection_ClosedAsync;
       await _hubConnection.DisposeAsync();
     }
     if (_logDB is not null)

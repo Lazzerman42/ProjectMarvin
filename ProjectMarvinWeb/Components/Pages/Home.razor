@@ -13,9 +13,9 @@
 					<div class="d-flex justify-content-between align-items-center">
 						<div>
 							<button @onclick="ShowConfirmDialog" class="BtnLeft">Delete all LogEntries</button>
-							<Confirm IsVisible="@showDialog" OnConfirm="HandleConfirmation" OnClose="CloseDialog" />
-							<button class="BtnLeft" @onclick="() => { searchMessageFilter = string.Empty; searchSenderFilter = string.Empty; }">Clear Filters</button>
-							<button @onclick="ShowDistincts" class="BtnLeft">Toggle Show Latest LogPost per IPAdress/Sender</button>
+							<Confirm IsVisible="@_showDialog" OnConfirm="HandleConfirmationAsync" OnClose="CloseDialog" />
+							<button class="BtnLeft" @onclick="() => { _searchMessageFilter = string.Empty; _searchSenderFilter = string.Empty; }">Clear Filters</button>
+							<button @onclick="ShowDistinctsAsync" class="BtnLeft">Toggle Show Latest LogPost per IPAdress/Sender</button>
 						</div>
 						<div>
 							@if (IsConnected)
@@ -38,18 +38,18 @@
 	</SectionContent>
 
 	<div class="grid-container"><Paginator State="@_pagination" /></div>
-	<QuickGrid Items="FilteredLog" @ref="myLogGrid" Pagination="@_pagination">
+	<QuickGrid Items="FilteredLog" @ref="_myLogGrid" Pagination="@_pagination">
 		<PropertyColumn Property="m => m.LogDate" Title="LogDate" Format="dd-MM-yy HH:mm:ss" Class="LogDate" Sortable="true" IsDefaultSortColumn InitialSortDirection="SortDirection.Descending" Align="Align.Start" />
 		<PropertyColumn Property="m => m.IPAdress" Sortable="true" Align="Align.Left" Class="LogDate" />
 		<PropertyColumn Property="m => m.LogType" Title="Class" Class="LogType" Sortable="true" Align="Align.Left" />
-		<PropertyColumn Property="m => m.Sender" Sortable="true" Align="Align.Left" Title="@searchSenderFilterTitle" Class="searchGlass LogSender">
+		<PropertyColumn Property="m => m.Sender" Sortable="true" Align="Align.Left" Title="@SearchSenderFilterTitle" Class="searchGlass LogSender">
 			<ColumnOptions>
-				<input type="Search" autofocus @bind="searchSenderFilter" @bind:event="oninput" placeholder="Sender..." />
+				<input type="Search" autofocus @bind="_searchSenderFilter" @bind:event="oninput" placeholder="Sender..." />
 			</ColumnOptions>
 		</PropertyColumn>
-		<PropertyColumn Property="m => m.Message" Sortable="true" Align="Align.Left" Class="searchGlass" Title="@searchMesssageFilterTitle">
+		<PropertyColumn Property="m => m.Message" Sortable="true" Align="Align.Left" Class="searchGlass" Title="@SearchMesssageFilterTitle">
 			<ColumnOptions>
-				<input type="Search" autofocus @bind="searchMessageFilter" @bind:event="oninput" placeholder="Message..." />
+				<input type="Search" autofocus @bind="_searchMessageFilter" @bind:event="oninput" placeholder="Message..." />
 			</ColumnOptions>
 		</PropertyColumn>
 	</QuickGrid>

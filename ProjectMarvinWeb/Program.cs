@@ -196,7 +196,7 @@ static async Task HandleLogRequestAsync(HttpContext context, string postData, IS
 
     await SaveLogEntryAsync(services, logEntry);
 
-    await logHub.SendLogUpdate();
+    await logHub.SendLogUpdateAsync();
   }
 }
 //////////////////////////////////////////////////////////////////////////////////

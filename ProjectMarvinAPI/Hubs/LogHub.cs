@@ -7,10 +7,10 @@ namespace ProjectMarvinAPI.Hubs;
 /// </summary>
 public class LogHub : Hub
 {
-	public async Task SendLogUpdate()
-	{
-		if (Clients is not null)
-			await Clients.All.SendAsync("ReceiveLogUpdate");
-		Console.WriteLine("I Loghubben ");
-	}
+  public async Task SendLogUpdateAsync()
+  {
+    if (Clients is not null)
+      await Clients.All.SendAsync("ReceiveLogUpdate");
+    Console.WriteLine("I Loghubben ");
+  }
 }
