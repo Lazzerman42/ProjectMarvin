@@ -117,10 +117,14 @@ public partial class Home : ComponentBase, IAsyncDisposable
       // If we have Search keywords
       if (!string.IsNullOrEmpty(_searchMessageFilter) || !string.IsNullOrEmpty(_searchSenderFilter))
       {
+#pragma warning disable RCS1155 // Use StringComparison when comparing strings
+#pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
         result = result.Where(l =>
             (string.IsNullOrEmpty(_searchMessageFilter) || l.Message!.ToUpper().Contains(_searchMessageFilter.ToUpper())) &&
             (string.IsNullOrEmpty(_searchSenderFilter) || l.Sender!.ToUpper().Contains(_searchSenderFilter.ToUpper()))
         );
+#pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
+#pragma warning restore RCS1155 // Use StringComparison when comparing strings
       }
       // Uses IPAdress + Sender to get a list of Distinct Log "devices", diplays there latest post
       if (_showDistinct) // Toggled by Button in UI
