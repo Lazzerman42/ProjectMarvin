@@ -118,8 +118,8 @@ public partial class Home : ComponentBase, IAsyncDisposable
       if (!string.IsNullOrEmpty(_searchMessageFilter) || !string.IsNullOrEmpty(_searchSenderFilter))
       {
         result = result.Where(l =>
-            (string.IsNullOrEmpty(_searchMessageFilter) || l.Message!.Contains(_searchMessageFilter, StringComparison.CurrentCultureIgnoreCase)) &&
-            (string.IsNullOrEmpty(_searchSenderFilter) || l.Sender!.Contains(_searchSenderFilter, StringComparison.CurrentCultureIgnoreCase))
+            (string.IsNullOrEmpty(_searchMessageFilter) || l.Message!.ToUpper().Contains(_searchMessageFilter.ToUpper())) &&
+            (string.IsNullOrEmpty(_searchSenderFilter) || l.Sender!.ToUpper().Contains(_searchSenderFilter.ToUpper()))
         );
       }
       // Uses IPAdress + Sender to get a list of Distinct Log "devices", diplays there latest post
