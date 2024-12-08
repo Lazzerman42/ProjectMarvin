@@ -33,7 +33,7 @@ Included are also some client-test code, one micropython file showing how to use
 
 ### Requirements:
 
-1. NET 8 SDK
+1. NET 9 SDK
 2. VS 2022 Community or better / VS Code with C# Dev Kit
 3. If you are going to call API:s from other devices, - you must host Project Marvin API so it gets an IP number - not "localhost". If you only use it locally in your internal network
 4. SQLite Database - can be run on all platforms
