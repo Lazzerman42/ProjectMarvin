@@ -7,6 +7,13 @@
 ::deep tbody tr:nth-child(even) {
 		background: rgb(133, 133, 133, 0.40);
 	}
+::deep tr:has(> td:not(:empty)) > td {
+	display: table-cell;
+}
+
+::deep td:empty {
+	display: none;
+}
 
 /* Magnifying glass for Search */
 ::deep .searchGlass .col-options-button {

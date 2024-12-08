@@ -38,7 +38,7 @@
 	</SectionContent>
 
 	<div class="grid-container"><Paginator State="@_pagination" /></div>
-	<QuickGrid Items="FilteredLog" @ref="_myLogGrid" Pagination="@_pagination">
+	<QuickGrid Items="FilteredLog" @ref="_myLogGrid" Pagination="@_pagination" >
 		<PropertyColumn Property="m => m.LogDate" Title="LogDate" Format="dd-MM-yy HH:mm:ss" Class="LogDate" Sortable="true" IsDefaultSortColumn InitialSortDirection="SortDirection.Descending" Align="Align.Start" />
 		<PropertyColumn Property="m => m.IPAdress" Sortable="true" Align="Align.Left" Class="LogDate" />
 		<PropertyColumn Property="m => m.LogType" Title="Class" Class="LogType" Sortable="true" Align="Align.Left" />

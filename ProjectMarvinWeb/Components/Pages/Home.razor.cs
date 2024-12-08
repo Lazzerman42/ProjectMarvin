@@ -49,7 +49,7 @@ public partial class Home : ComponentBase, IAsyncDisposable
   public NavigationManager? NavMan { get; set; }
 
   private string? _searchMessageFilter = "",
-                           _searchSenderFilter = "";
+                  _searchSenderFilter = "";
 
   private QuickGrid<LogEntry>? _myLogGrid; // Our UI QuickGrid reference
 
@@ -63,6 +63,9 @@ public partial class Home : ComponentBase, IAsyncDisposable
   {
     _showDialog = false;
   }
+
+
+
   /// <summary>
   /// Displays Are you sure dialog - if YES - Deletes all logdata in SQLite
   /// </summary>
@@ -146,6 +149,7 @@ public partial class Home : ComponentBase, IAsyncDisposable
              ld.LatestDate == l.LogDate))
          .OrderByDescending(l => l.LogDate).AsQueryable();
       }
+
       return result;
     }
   }
@@ -214,7 +218,7 @@ public partial class Home : ComponentBase, IAsyncDisposable
     await UpdateDataAsync();
 
     const int maxRetryAttempts = 15;
-    const int delayBetweenAttempts = 5000; // 10 sekunder i millisekunder
+    const int delayBetweenAttempts = 5000; // 5 sekunder i millisekunder
 
     for (int i = 0; i < maxRetryAttempts; i++)
     {

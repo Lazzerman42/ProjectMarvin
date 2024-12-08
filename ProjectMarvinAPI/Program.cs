@@ -92,8 +92,6 @@ app.MapGet("api/LogCount", async (HttpContext context) =>
 .WithName("LogCount")
 .WithOpenApi();
 
-
-
 // This is an Exmaple of a slightly modified simple GET, where you offer a special Endpoint for
 // a special Application - so you can set default values for just that APP. Here we set the Sender attribute
 app.MapGet("api/Log/ExampleApp/{message}", async (string message, HttpContext context) =>
@@ -122,7 +120,6 @@ app.MapPost("api/Log/", async (HttpRequest request, HttpContext context) =>
   {
     return Results.Problem(detail: ex.Message, statusCode: 500);
   }
-
 });
 
 // ECHO function - you can use this to check that WiFi is working as expected(ie send something known,
@@ -160,7 +157,10 @@ static async Task SaveLogEntryAsync(IServiceProvider services, LogEntry logEntry
     await db.LogEntries.AddAsync(logEntry);
     await db.SaveChangesAsync();
   }
-  catch { }
+  catch (Exception ex) // Don't expect the simple IoT devices to handle any errors
+  {
+    Console.WriteLine($"SaveLogEntryAsync Error: {ex.Message} ");
+  }
 }
 // Main method for handling saving of LogEntries 
 static async Task HandleLogRequestAsync(HttpContext context, string postData, IServiceProvider services, string sender = "")
@@ -187,7 +187,10 @@ static async Task HandleLogRequestAsync(HttpContext context, string postData, IS
 
     await logHub.SendLogUpdateAsync();
   }
-  catch { }
+  catch (Exception ex) // Don't expect the simple IoT devices to handle any errors
+  {
+    Console.WriteLine($"HandleLogRequestAsync Error: {ex.Message} ");
+  }
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
