@@ -59,6 +59,13 @@ Included are also some client-test code, one micropython file showing how to use
 5. Make sure you change password / makes a new user before exposing the Web to Internet.
 6. In Marvin API Project, there is a folder named "Example code". There you'll find som micropyhton code that I have tested on my RPi Pico W and some examples of using CURL and Powershell to send LogEntries. The python code is divided into two files, "Test MarvinAPI.py", here you need to fill in your Wifi Details - and "logapi.py", here you will have to provide the URL to the API (you can't use localhost since the Pico is another computer).
 
+### Host the API safely in IIS using IP restrictions
+1. You can host the API Safely in IIS using the IP restrictions module in IIS.
+2. Use "settings" and make default "deny all" -> forbidden, rule
+3. Add Allow rule for your network, if you use IP Range setting you may enter: IP Adress 192.168.1.0 and Mask 255.255.255.0 to allow your local LAN to access the API in IIS
+4. Under hsot bindings, don't set a Domain Name(URL) - and set the IP adress to listen to (same as the IIS server adress)
+
+Now you have a safe place to host your API inside IIS - it won't be reachable from the Intenet
 Have Fun!
 
 // Lazze Ziden - Stockholm Sweden
