@@ -34,6 +34,40 @@ namespace ProjectMarvin.Components.Pages;
 /// </summary>
 public partial class Home : ComponentBase, IAsyncDisposable
 {
+  protected override async Task OnInitializedAsync()
+  {
+    await StartLogHubAsync();
+
+    try
+    {
+      if (_hubConnection != null)
+      {
+        await _hubConnection.StartAsync();
+        Console.WriteLine("SignalR connected.");
+      }
+    }
+    catch (Exception ex) // If the SignalR/API is NOT started, let the page render before retrying connecting SignalR
+    {
+      _ = Task.Run(async () =>
+      {
+        await Task.Delay(10000); // 10 seconds delay to let the page render
+        await SignalRRetryAsync();
+      });
+      Console.WriteLine($"Error connecting to SignalR: {ex.Message} Retrying");
+    }
+  }
+  public async Task UpdateDataAsync()
+  {
+    await InvokeAsync(async () =>
+    {
+      if (_myLogGrid is not null)
+      {
+        await _myLogGrid.RefreshDataAsync();
+        StateHasChanged();
+      }
+    });
+  }
+
   private readonly PaginationState _pagination = new() { ItemsPerPage = 42 };
   public bool IsConnected => _hubConnection?.State == HubConnectionState.Connected; // For displaying the connected / disconneced symbol
 
@@ -64,10 +98,8 @@ public partial class Home : ComponentBase, IAsyncDisposable
     _showDialog = false;
   }
 
-
-
   /// <summary>
-  /// Displays Are you sure dialog - if YES - Deletes all logdata in SQLite
+  /// Displays "Are you sure" dialog - if YES - Deletes all logdata in SQLite
   /// </summary>
   /// <param name="confirmed"></param>
   /// <returns></returns>
@@ -120,36 +152,27 @@ public partial class Home : ComponentBase, IAsyncDisposable
       // If we have Search keywords
       if (!string.IsNullOrEmpty(_searchMessageFilter) || !string.IsNullOrEmpty(_searchSenderFilter))
       {
-#pragma warning disable RCS1155 // Use StringComparison when comparing strings
-#pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
         result = result.Where(l =>
             (string.IsNullOrEmpty(_searchMessageFilter) || l.Message!.ToUpper().Contains(_searchMessageFilter.ToUpper())) &&
             (string.IsNullOrEmpty(_searchSenderFilter) || l.Sender!.ToUpper().Contains(_searchSenderFilter.ToUpper()))
         );
-#pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
-#pragma warning restore RCS1155 // Use StringComparison when comparing strings
       }
       // Uses IPAdress + Sender to get a list of Distinct Log "devices", diplays there latest post
       if (_showDistinct) // Toggled by Button in UI
       {
-        var latestDates = _logDB.LogEntries
-                  .GroupBy(l => new { l.IPAdress, l.Sender })
-                  .Select(g => new
-                  {
-                    g.Key.IPAdress,
-                    g.Key.Sender,
-                    LatestDate = g.Max(l => l.LogDate)
-                  }).AsQueryable();
-        // The resulting list here contains all data from the LogEntry, could be used to set an alarm 
-        // if the last logPost is older than XXX....
-        result = _logDB.LogEntries
-         .Where(l => latestDates.Any(ld =>
-             ld.IPAdress == l.IPAdress &&
-             ld.Sender == l.Sender &&
-             ld.LatestDate == l.LogDate))
-         .OrderByDescending(l => l.LogDate).AsQueryable();
-      }
+        var IPAdressList = _logDB.LogEntries
+                     .AsEnumerable()
+                     .DistinctBy(l => new { l.IPAdress })
+                     .Select(l => l.IPAdress).AsEnumerable();
 
+        result = (IQueryable<LogEntry>)_logDB.LogEntries
+          .Where(l => IPAdressList.Contains(l.IPAdress) &&
+          l.LogDate == _logDB.LogEntries
+          .Where(inner => inner.IPAdress == l.IPAdress)
+          .Max(inner => inner.LogDate))
+          .AsEnumerable();
+      }
+      Console.WriteLine("DATA!!!!!!!!!!!!");
       return result;
     }
   }
@@ -160,29 +183,7 @@ public partial class Home : ComponentBase, IAsyncDisposable
 
     await UpdateDataAsync();
   }
-  protected override async Task OnInitializedAsync()
-  {
-    await StartLogHubAsync();
 
-    try
-    {
-      if (_hubConnection != null)
-      {
-        await _hubConnection.StartAsync();
-        Console.WriteLine("SignalR connected.");
-        await UpdateDataAsync();
-      }
-    }
-    catch (Exception ex) // If the SignalR/API is NOT started, let the page render before retrying connecting SignalR
-    {
-      _ = Task.Run(async () =>
-     {
-       await Task.Delay(10000); // 10 seconds delay to let the page render
-       await SignalRRetryAsync();
-     });
-      Console.WriteLine($"Error connecting to SignalR: {ex.Message} Retrying");
-    }
-  }
   /// <summary>
   /// Starts our SignalR hub(LogHub) and wires up the "event" when message "ReceiveLogUpdate" is received.
   /// </summary>
@@ -259,22 +260,7 @@ public partial class Home : ComponentBase, IAsyncDisposable
     await _logDB!.Database.ExecuteSqlRawAsync("DELETE FROM LogEntries");
     await UpdateDataAsync();
   }
-  /// <summary>
-  /// We must tell the Quickgrid to refresh its data and we must do it on the UI thread
-  /// Hence the InvokeAsync code
-  /// </summary>
-  /// <returns></returns>
-  public async Task UpdateDataAsync()
-  {
-    await InvokeAsync(async () =>
-    {
-      if (_myLogGrid is not null)
-      {
-        await _myLogGrid.RefreshDataAsync();
-        StateHasChanged();
-      }
-    });
-  }
+
   /// <summary>
   /// Make sure we dispose our resources
   /// </summary>

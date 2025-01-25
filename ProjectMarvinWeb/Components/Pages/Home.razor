@@ -1,6 +1,6 @@
 ﻿@page "/"
 @inject NavigationManager navMan
-@rendermode InteractiveServer
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Authorize]
 
 <PageTitle>Realtime Log</PageTitle>
@@ -40,7 +40,12 @@
 	<div class="grid-container"><Paginator State="@_pagination" /></div>
 	<QuickGrid Items="FilteredLog" @ref="_myLogGrid" Pagination="@_pagination" >
 		<PropertyColumn Property="m => m.LogDate" Title="LogDate" Format="dd-MM-yy HH:mm:ss" Class="LogDate" Sortable="true" IsDefaultSortColumn InitialSortDirection="SortDirection.Descending" Align="Align.Start" />
-		<PropertyColumn Property="m => m.IPAdress" Sortable="true" Align="Align.Left" Class="LogDate" />
+		<TemplateColumn Sortable="true" Align="Align.Left" Class="LogIPAdress">
+			<HeaderTemplate><b>IP Address</b></HeaderTemplate>
+			<ChildContent Context="m">
+				<a href="@($"http://{m.IPAdress}")" target="_blank">@m.IPAdress</a>
+			</ChildContent>
+		</TemplateColumn>
 		<PropertyColumn Property="m => m.LogType" Title="Class" Class="LogType" Sortable="true" Align="Align.Left" />
 		<PropertyColumn Property="m => m.Sender" Sortable="true" Align="Align.Left" Title="@SearchSenderFilterTitle" Class="searchGlass LogSender">
 			<ColumnOptions>

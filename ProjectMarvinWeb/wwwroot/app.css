@@ -66,10 +66,24 @@ h1:focus {
 }
 
 .LogDate {
-	width: fit-content;
-	padding: 0 10px 0 0 !important;
+	padding: 0 30px 0 0 !important;
 	white-space: nowrap;
+	width: 130px; /* Sätt en fast bredd */
+	overflow: hidden; /* Dölj eventuell överflödig text om den är för lång */
+	text-overflow: ellipsis; /* Lägg till ellips (...) om texten är för lång för att få plats */
 }
+.LogIPAdress {
+	padding: 0 30px 0 0 !important;
+	white-space: nowrap;
+	width: 130px; /* Sätt en fast bredd */
+	overflow: hidden; /* Dölj eventuell överflödig text om den är för lång */
+	text-overflow: ellipsis; /* Lägg till ellips (...) om texten är för lång för att få plats */
+}
+	.LogIPAdress a {
+		font-weight: 600 !important;
+		color: black !important;
+		text-decoration: none !important;
+	}
 .LogType {
 	width: 80px;
 	padding: 0 !important;

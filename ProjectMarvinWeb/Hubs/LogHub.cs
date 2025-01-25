@@ -9,9 +9,17 @@ namespace ProjectMarvin.Hubs
   {
     public async Task<Task> SendLogUpdateAsync()
     {
-      await Clients.All.SendAsync("ReceiveLogUpdate");
-      Console.WriteLine("I Loghubben ");
-      return Task.CompletedTask;
+      try
+      {
+        await Clients.All.SendAsync("ReceiveLogUpdate");
+        Console.WriteLine("I Loghubben ");
+        return Task.CompletedTask;
+      }
+      catch (Exception ex)
+      {
+        Console.WriteLine($"I Loghubben error: {ex.Message} ");
+        return Task.FromException(ex);
+      }
     }
   }
 }
