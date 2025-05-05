@@ -122,6 +122,21 @@ app.MapPost("api/Log/", async (HttpRequest request, HttpContext context) =>
   }
 });
 
+// Receive new LogEntry via JSON POST - this is the preferred method for most applications
+// Modern version ment for non IoT devices
+app.MapPost("api/LogEx/", async (LogEntry logEntry, HttpContext context) =>
+{
+  try
+  {
+    await HandleLogRequestAsyncEx(context, logEntry, app.Services);
+    return Results.Ok(logEntry);
+  }
+  catch (Exception ex)
+  {
+    return Results.Problem(detail: ex.Message, statusCode: 500);
+  }
+});
+
 // ECHO function - you can use this to check that WiFi is working as expected(ie send something known,
 // and compare the returned result. 
 app.MapGet("api/Echo/{message}", (string message) => message)
@@ -192,7 +207,35 @@ static async Task HandleLogRequestAsync(HttpContext context, string postData, IS
     Console.WriteLine($"HandleLogRequestAsync Error: {ex.Message} ");
   }
 }
+// Main method for handling saving of LogEntries for modern devices
+static async Task HandleLogRequestAsyncEx(HttpContext context, LogEntry logEntry, IServiceProvider services, string sender = "")
+{
+  try
+  {
+    var callerIpAddress = context.Connection.RemoteIpAddress?.ToString();
 
+    using var scope = services.CreateScope();
+    var logHub = scope.ServiceProvider.GetRequiredService<LogHub>();
+
+    logEntry.IPAdress = callerIpAddress;
+
+    if (logEntry.LogDate == null)
+      logEntry.LogDate = DateTime.Now;
+    if (sender != "")
+      logEntry.Sender = sender;
+
+    if (string.IsNullOrEmpty(logEntry.LogType))
+      logEntry.LogType = "Info";
+
+    await SaveLogEntryAsync(services, logEntry);
+
+    await logHub.SendLogUpdateAsync();
+  }
+  catch (Exception ex) // Don't expect the simple IoT devices to handle any errors
+  {
+    Console.WriteLine($"HandleLogRequestAsync Error: {ex.Message} ");
+  }
+}
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #pragma warning disable S6966 // Awaitable method should be used
