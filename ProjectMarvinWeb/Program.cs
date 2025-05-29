@@ -48,7 +48,11 @@ builder.Services.AddScoped<ApplicationDbContextIdentity>(p => p.GetRequiredServi
 // DBContextFactory for SQLite LogData database
 var LogDataConnection = builder.Configuration.GetConnectionString("LogDataConnection");
 builder.Services.AddDbContextFactory<ApplicationDbContextLogData>(options =>
-    options.UseSqlite(LogDataConnection));
+    options.UseSqlite(LogDataConnection)
+    .EnableSensitiveDataLogging(false)
+    .EnableServiceProviderCaching()
+    .EnableDetailedErrors(false),
+    ServiceLifetime.Scoped);
 
 // Add Identitycore for our ApplicationUser, no mail confirmation 
 builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = false)

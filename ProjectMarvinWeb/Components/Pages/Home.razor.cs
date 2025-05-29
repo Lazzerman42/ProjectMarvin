@@ -56,10 +56,14 @@ public partial class Home : ComponentBase, IAsyncDisposable
       Console.WriteLine($"Error connecting to SignalR: {ex.Message} Retrying");
     }
   }
+
   public async Task UpdateDataAsync()
   {
     await InvokeAsync(async () =>
     {
+      // Invalidera cache när ny data kommer
+      InvalidateFilterCache();
+
       if (_myLogGrid is not null)
       {
         await _myLogGrid.RefreshDataAsync();
@@ -89,6 +93,11 @@ public partial class Home : ComponentBase, IAsyncDisposable
 
   private bool _showDialog = false;
   private bool _showDistinct = false;
+
+  // Cache för FilteredLog prestanda
+  private IQueryable<LogEntry>? _cachedFilteredLog;
+  private string? _lastFilterKey;
+
   private void ShowConfirmDialog()
   {
     _showDialog = true;
@@ -111,6 +120,7 @@ public partial class Home : ComponentBase, IAsyncDisposable
       await DeleteLogTableDataAsync();
     }
   }
+
   /// <summary>
   /// Sets the Sender Title to include the search keyword
   /// </summary>
@@ -124,6 +134,7 @@ public partial class Home : ComponentBase, IAsyncDisposable
         return "Sender";
     }
   }
+
   /// <summary>
   /// Sets the Message Title to include the search keyword
   /// </summary>
@@ -137,8 +148,18 @@ public partial class Home : ComponentBase, IAsyncDisposable
         return "Message";
     }
   }
+
   /// <summary>
-  /// Datasource for the Quickgrid. Uses SQLite database and entityframework
+  /// Invaliderar filter cache när filter ändras
+  /// </summary>
+  private void InvalidateFilterCache()
+  {
+    _cachedFilteredLog = null;
+    _lastFilterKey = null;
+  }
+
+  /// <summary>
+  /// OPTIMERAD version - Datasource for the Quickgrid. Uses SQLite database and entityframework
   /// </summary>
   IQueryable<LogEntry> FilteredLog
   {
@@ -147,40 +168,75 @@ public partial class Home : ComponentBase, IAsyncDisposable
       if (_logDB is null)
         return new List<LogEntry>().AsQueryable();
 
-      IQueryable<LogEntry>? result = _logDB.LogEntries.AsQueryable();
+      // Skapa cache key baserat på alla filter
+      var currentFilterKey = $"{_searchMessageFilter}|{_searchSenderFilter}|{_showDistinct}";
 
-      // If we have Search keywords
-      if (!string.IsNullOrEmpty(_searchMessageFilter) || !string.IsNullOrEmpty(_searchSenderFilter))
+      // Returnera cached version om inget ändrats
+      if (_cachedFilteredLog != null && _lastFilterKey == currentFilterKey)
       {
-        result = result.Where(l =>
-            (string.IsNullOrEmpty(_searchMessageFilter) || l.Message!.ToUpper().Contains(_searchMessageFilter.ToUpper())) &&
-            (string.IsNullOrEmpty(_searchSenderFilter) || l.Sender!.ToUpper().Contains(_searchSenderFilter.ToUpper()))
-        );
+        return _cachedFilteredLog;
       }
-      // Uses IPAdress + Sender to get a list of Distinct Log "devices", diplays there latest post
-      if (_showDistinct) // Toggled by Button in UI
-      {
-        var IPAdressList = _logDB.LogEntries
-                     .AsEnumerable()
-                     .DistinctBy(l => new { l.IPAdress })
-                     .Select(l => l.IPAdress).AsEnumerable();
 
-        result = (IQueryable<LogEntry>)_logDB.LogEntries
-          .Where(l => IPAdressList.Contains(l.IPAdress) &&
-          l.LogDate == _logDB.LogEntries
-          .Where(inner => inner.IPAdress == l.IPAdress)
-          .Max(inner => inner.LogDate))
-          .AsEnumerable();
+      IQueryable<LogEntry> result;
+
+      if (_showDistinct)
+      {
+        // OPTIMERAD distinct query som stannar i SQLite
+        result = _logDB.LogEntries
+          .Where(l => l.LogDate == _logDB.LogEntries
+            .Where(inner => inner.IPAdress == l.IPAdress)
+            .Max(inner => inner.LogDate))
+          .AsQueryable();
       }
-      Console.WriteLine("DATA!!!!!!!!!!!!");
+      else
+      {
+        result = _logDB.LogEntries.AsQueryable();
+      }
+
+      // Lägg till text-filter (hålls i SQLite)
+      if (!string.IsNullOrEmpty(_searchMessageFilter))
+      {
+        result = result.Where(l => l.Message!.ToUpper().Contains(_searchMessageFilter.ToUpper()));
+      }
+
+      if (!string.IsNullOrEmpty(_searchSenderFilter))
+      {
+        result = result.Where(l => l.Sender!.ToUpper().Contains(_searchSenderFilter.ToUpper()));
+      }
+
+      // Cacha resultatet
+      _cachedFilteredLog = result;
+      _lastFilterKey = currentFilterKey;
+
       return result;
     }
   }
+
   // The ShowDistincts per IP/Sender toggle
   public async Task ShowDistinctsAsync()
   {
     _showDistinct = !_showDistinct; // Toggle view
+    InvalidateFilterCache(); // Rensa cache
+    await UpdateDataAsync();
+  }
 
+  /// <summary>
+  /// Uppdaterad för att hantera filter-ändringar korrekt
+  /// </summary>
+  public async Task OnSearchMessageChangedAsync(string newValue)
+  {
+    _searchMessageFilter = newValue;
+    InvalidateFilterCache();
+    await UpdateDataAsync();
+  }
+
+  /// <summary>
+  /// Uppdaterad för att hantera filter-ändringar korrekt
+  /// </summary>
+  public async Task OnSearchSenderChangedAsync(string newValue)
+  {
+    _searchSenderFilter = newValue;
+    InvalidateFilterCache();
     await UpdateDataAsync();
   }
 
@@ -201,6 +257,7 @@ public partial class Home : ComponentBase, IAsyncDisposable
 
     _hubConnection.On("ReceiveLogUpdate", async () => await UpdateDataAsync());
   }
+
   /// <summary>
   /// If Client detects SignalR connection is lost, connect again
   /// </summary>
@@ -209,7 +266,6 @@ public partial class Home : ComponentBase, IAsyncDisposable
   private async Task HubConnection_ClosedAsync(Exception? arg)
   {
     await SignalRRetryAsync();
-
     Console.WriteLine("Couldn't reconnect SignalR - check API/SignalR Hub - retrying");
   }
 
@@ -258,6 +314,7 @@ public partial class Home : ComponentBase, IAsyncDisposable
   public async Task DeleteLogTableDataAsync()
   {
     await _logDB!.Database.ExecuteSqlRawAsync("DELETE FROM LogEntries");
+    InvalidateFilterCache(); // Rensa cache efter borttagning
     await UpdateDataAsync();
   }
 
