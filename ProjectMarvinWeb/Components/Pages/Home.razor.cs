@@ -4,34 +4,10 @@ using Microsoft.AspNetCore.Components.QuickGrid;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.EntityFrameworkCore;
 using ProjectMarvin.Data;
+using System.Linq.Expressions;
 
 namespace ProjectMarvin.Components.Pages;
 
-/// <summary>
-/// (Thanks AI)
-/// Summary of Home.razor.cs:
-/// This file defines a Blazor component called 'Home' that implements a log viewing and management system using SignalR for real-time updates and Entity Framework Core for database interactions.
-/// Key Features:
-/// Uses QuickGrid for displaying log entries with pagination.
-/// Implements SignalR for real-time updates of log data.
-/// Provides filtering capabilities for log messages and senders.
-/// Offers a distinct view option to show only the latest log entry for each unique IP address and sender combination.
-/// Includes a dialog for confirming log data deletion.
-/// Main Components:
-/// SignalR hub connection for real-time updates
-/// Entity Framework Core context factory for database operations
-/// QuickGrid for displaying log entries
-/// Filtering logic for log entries
-/// Toggle for distinct view of log entries
-/// Dialog for confirming log deletion
-/// Notable Methods:
-/// OnInitializedAsync: Initializes SignalR connection
-/// UpdateData: Refreshes the QuickGrid data
-/// DeleteLogTableData: Clears all log entries from the database
-/// FilteredLog: Property that returns filtered log entries based on search criteria and distinct view toggle
-/// The component also implements IAsyncDisposable for proper resource cleanup of the SignalR connection and database context.
-/// This code demonstrates a robust implementation of a log viewer with real-time updates, filtering, and database interactions in a Blazor server application.
-/// </summary>
 public partial class Home : ComponentBase, IAsyncDisposable
 {
   protected override async Task OnInitializedAsync()
@@ -46,11 +22,12 @@ public partial class Home : ComponentBase, IAsyncDisposable
         Console.WriteLine("SignalR connected.");
       }
     }
-    catch (Exception ex) // If the SignalR/API is NOT started, let the page render before retrying connecting SignalR
+    catch (Exception ex)
     {
+      // Om SignalR inte är startat, försök igen efter 10 sekunder
       _ = Task.Run(async () =>
       {
-        await Task.Delay(10000); // 10 seconds delay to let the page render
+        await Task.Delay(10000);
         await SignalRRetryAsync();
       });
       Console.WriteLine($"Error connecting to SignalR: {ex.Message} Retrying");
@@ -61,9 +38,6 @@ public partial class Home : ComponentBase, IAsyncDisposable
   {
     await InvokeAsync(async () =>
     {
-      // Invalidera cache när ny data kommer
-      InvalidateFilterCache();
-
       if (_myLogGrid is not null)
       {
         await _myLogGrid.RefreshDataAsync();
@@ -73,45 +47,24 @@ public partial class Home : ComponentBase, IAsyncDisposable
   }
 
   private readonly PaginationState _pagination = new() { ItemsPerPage = 42 };
-  public bool IsConnected => _hubConnection?.State == HubConnectionState.Connected; // For displaying the connected / disconneced symbol
+  public bool IsConnected => _hubConnection?.State == HubConnectionState.Connected;
 
-  private HubConnection? _hubConnection; // For our SignalR connection to the API
+  private HubConnection? _hubConnection;
 
-  [Inject]
-  public IDbContextFactory<ApplicationDbContextLogData>? LogDBFactory { get; set; } // Factory is used to get our DBContext
-  private ApplicationDbContextLogData? _logDB; // Will be created from Factory
+  [Inject] public IDbContextFactory<ApplicationDbContextLogData>? LogDBFactory { get; set; }
+  [Inject] public IConfiguration? Configuration { get; set; }
+  [Inject] public NavigationManager? NavMan { get; set; }
 
-  [Inject] // Read the SignalR URL from config
-  IConfiguration? Configuration { get; set; }
-  [Inject]
-  public NavigationManager? NavMan { get; set; }
-
-  private string? _searchMessageFilter = "",
-                  _searchSenderFilter = "";
-
-  private QuickGrid<LogEntry>? _myLogGrid; // Our UI QuickGrid reference
+  private string? _searchMessageFilter = "";
+  private string? _searchSenderFilter = "";
+  private QuickGrid<LogEntry>? _myLogGrid;
 
   private bool _showDialog = false;
   private bool _showDistinct = false;
 
-  // Cache för FilteredLog prestanda
-  private IQueryable<LogEntry>? _cachedFilteredLog;
-  private string? _lastFilterKey;
+  private void ShowConfirmDialog() => _showDialog = true;
+  private void CloseDialog() => _showDialog = false;
 
-  private void ShowConfirmDialog()
-  {
-    _showDialog = true;
-  }
-  private void CloseDialog()
-  {
-    _showDialog = false;
-  }
-
-  /// <summary>
-  /// Displays "Are you sure" dialog - if YES - Deletes all logdata in SQLite
-  /// </summary>
-  /// <param name="confirmed"></param>
-  /// <returns></returns>
   private async Task HandleConfirmationAsync(bool confirmed)
   {
     _showDialog = false;
@@ -121,148 +74,133 @@ public partial class Home : ComponentBase, IAsyncDisposable
     }
   }
 
-  /// <summary>
-  /// Sets the Sender Title to include the search keyword
-  /// </summary>
-  public string SearchSenderFilterTitle
+  public string SearchSenderFilterTitle =>
+      string.IsNullOrEmpty(_searchSenderFilter) ? "Sender" : "Sender : " + _searchSenderFilter;
+
+  public string SearchMesssageFilterTitle =>
+      string.IsNullOrEmpty(_searchMessageFilter) ? "Message" : "Message : " + _searchMessageFilter;
+
+  // Hjälpmetod för att extrahera PropertyName från en PropertyColumn
+  private static string? GetPropertyName(ColumnBase<LogEntry>? column)
   {
-    get
+    if (column is null)
+      return null;
+
+    var propColumnType = column.GetType();
+    if (propColumnType.IsGenericType && propColumnType.GetGenericTypeDefinition() == typeof(PropertyColumn<,>))
     {
-      if (!string.IsNullOrEmpty(_searchSenderFilter))
-        return "Sender : " + _searchSenderFilter;
-      else
-        return "Sender";
+      var exprProp = propColumnType.GetProperty("Property")?.GetValue(column) as LambdaExpression;
+      if (exprProp?.Body is MemberExpression member)
+      {
+        return member.Member.Name;
+      }
     }
+    return null;
   }
 
   /// <summary>
-  /// Sets the Message Title to include the search keyword
+  /// ItemsProvider – laddar bara den sida som behövs från DB
   /// </summary>
-  public string SearchMesssageFilterTitle
+  private async ValueTask<GridItemsProviderResult<LogEntry>> LoadLogEntriesAsync(GridItemsProviderRequest<LogEntry> request)
   {
-    get
+    if (LogDBFactory is null)
+      return GridItemsProviderResult.From(Array.Empty<LogEntry>(), 0);
+
+    await using var db = await LogDBFactory.CreateDbContextAsync();
+
+    IQueryable<LogEntry> query;
+    if (_showDistinct)
     {
-      if (!string.IsNullOrEmpty(_searchMessageFilter))
-        return "Message : " + _searchMessageFilter;
-      else
-        return "Message";
+      // Hämta senaste per IP
+      query = db.LogEntries
+          .Where(l => l.LogDate == db.LogEntries
+              .Where(inner => inner.IPAdress == l.IPAdress)
+              .Max(inner => inner.LogDate));
     }
-  }
-
-  /// <summary>
-  /// Invaliderar filter cache när filter ändras
-  /// </summary>
-  private void InvalidateFilterCache()
-  {
-    _cachedFilteredLog = null;
-    _lastFilterKey = null;
-  }
-
-  /// <summary>
-  /// OPTIMERAD version - Datasource for the Quickgrid. Uses SQLite database and entityframework
-  /// </summary>
-  IQueryable<LogEntry> FilteredLog
-  {
-    get
+    else
     {
-      if (_logDB is null)
-        return new List<LogEntry>().AsQueryable();
-
-      // Skapa cache key baserat på alla filter
-      var currentFilterKey = $"{_searchMessageFilter}|{_searchSenderFilter}|{_showDistinct}";
-
-      // Returnera cached version om inget ändrats
-      if (_cachedFilteredLog != null && _lastFilterKey == currentFilterKey)
-      {
-        return _cachedFilteredLog;
-      }
-
-      IQueryable<LogEntry> result;
-
-      if (_showDistinct)
-      {
-        // OPTIMERAD distinct query som stannar i SQLite
-        result = _logDB.LogEntries
-          .Where(l => l.LogDate == _logDB.LogEntries
-            .Where(inner => inner.IPAdress == l.IPAdress)
-            .Max(inner => inner.LogDate))
-          .AsQueryable();
-      }
-      else
-      {
-        result = _logDB.LogEntries.AsQueryable();
-      }
-
-      // Lägg till text-filter (hålls i SQLite)
-      if (!string.IsNullOrEmpty(_searchMessageFilter))
-      {
-        result = result.Where(l => l.Message!.ToUpper().Contains(_searchMessageFilter.ToUpper()));
-      }
-
-      if (!string.IsNullOrEmpty(_searchSenderFilter))
-      {
-        result = result.Where(l => l.Sender!.ToUpper().Contains(_searchSenderFilter.ToUpper()));
-      }
-
-      // Cacha resultatet
-      _cachedFilteredLog = result;
-      _lastFilterKey = currentFilterKey;
-
-      return result;
+      query = db.LogEntries;
     }
-  }
 
-  // The ShowDistincts per IP/Sender toggle
+    // Applicera filter
+    if (!string.IsNullOrEmpty(_searchMessageFilter))
+    {
+      var msgFilter = _searchMessageFilter.ToUpper();
+      query = query.Where(l => l.Message!.ToUpper().Contains(msgFilter));
+    }
+
+    if (!string.IsNullOrEmpty(_searchSenderFilter))
+    {
+      var senderFilter = _searchSenderFilter.ToUpper();
+      query = query.Where(l => l.Sender!.ToUpper().Contains(senderFilter));
+    }
+
+    // Räkna FÖRE sortering och paginering
+    var totalCount = await query.CountAsync();
+
+    // --- SORTERING ---
+    var sortByProperties = request.GetSortByProperties();
+    if (sortByProperties.Any())
+    {
+      var firstSort = sortByProperties.First();
+      var propertyName = firstSort.PropertyName;
+      var descending = firstSort.Direction == SortDirection.Descending;
+
+      // Hantera sortering för varje kolumn
+      query = propertyName switch
+      {
+        nameof(LogEntry.LogDate) => descending ? query.OrderByDescending(x => x.LogDate) : query.OrderBy(x => x.LogDate),
+        nameof(LogEntry.IPAdress) => descending ? query.OrderByDescending(x => x.IPAdress) : query.OrderBy(x => x.IPAdress),
+        nameof(LogEntry.LogType) => descending ? query.OrderByDescending(x => x.LogType) : query.OrderBy(x => x.LogType),
+        nameof(LogEntry.Sender) => descending ? query.OrderByDescending(x => x.Sender) : query.OrderBy(x => x.Sender),
+        nameof(LogEntry.Message) => descending ? query.OrderByDescending(x => x.Message) : query.OrderBy(x => x.Message),
+        _ => query.OrderByDescending(l => l.LogDate) // Default
+      };
+    }
+    else
+    {
+      // Default sortering om ingen sortering är vald
+      query = query.OrderByDescending(l => l.LogDate);
+    }
+
+    // Paginering
+    var takeCount = request.Count ?? _pagination.ItemsPerPage;
+    var items = await query
+        .Skip(request.StartIndex)
+        .Take(takeCount)
+        .ToListAsync();
+
+    return GridItemsProviderResult.From(items, totalCount);
+  }
   public async Task ShowDistinctsAsync()
   {
-    _showDistinct = !_showDistinct; // Toggle view
-    InvalidateFilterCache(); // Rensa cache
+    _showDistinct = !_showDistinct;
     await UpdateDataAsync();
   }
 
-  /// <summary>
-  /// Uppdaterad för att hantera filter-ändringar korrekt
-  /// </summary>
   public async Task OnSearchMessageChangedAsync(string newValue)
   {
     _searchMessageFilter = newValue;
-    InvalidateFilterCache();
     await UpdateDataAsync();
   }
 
-  /// <summary>
-  /// Uppdaterad för att hantera filter-ändringar korrekt
-  /// </summary>
   public async Task OnSearchSenderChangedAsync(string newValue)
   {
     _searchSenderFilter = newValue;
-    InvalidateFilterCache();
     await UpdateDataAsync();
   }
 
-  /// <summary>
-  /// Starts our SignalR hub(LogHub) and wires up the "event" when message "ReceiveLogUpdate" is received.
-  /// </summary>
-  /// <returns></returns>
-  private async Task StartLogHubAsync()
+  private Task StartLogHubAsync()
   {
-    if (LogDBFactory is not null)
-      _logDB = await LogDBFactory.CreateDbContextAsync();
-
     _hubConnection = new HubConnectionBuilder()
         .WithUrl(Configuration?.GetConnectionString("SignalRAPI") ?? "")
         .Build();
 
     _hubConnection.Closed += HubConnection_ClosedAsync;
-
     _hubConnection.On("ReceiveLogUpdate", async () => await UpdateDataAsync());
+    return Task.CompletedTask;
   }
 
-  /// <summary>
-  /// If Client detects SignalR connection is lost, connect again
-  /// </summary>
-  /// <param name="arg"></param>
-  /// <returns></returns>
   private async Task HubConnection_ClosedAsync(Exception? arg)
   {
     await SignalRRetryAsync();
@@ -275,7 +213,7 @@ public partial class Home : ComponentBase, IAsyncDisposable
     await UpdateDataAsync();
 
     const int maxRetryAttempts = 15;
-    const int delayBetweenAttempts = 5000; // 5 sekunder i millisekunder
+    const int delayBetweenAttempts = 5000;
 
     for (int i = 0; i < maxRetryAttempts; i++)
     {
@@ -297,7 +235,6 @@ public partial class Home : ComponentBase, IAsyncDisposable
       catch (Exception ex)
       {
         Console.WriteLine($"Reconnect SignalR Try: {i + 1} Fail: {ex.Message}");
-
         if (i < maxRetryAttempts - 1)
         {
           await Task.Delay(delayBetweenAttempts);
@@ -307,31 +244,20 @@ public partial class Home : ComponentBase, IAsyncDisposable
     }
   }
 
-  /// <summary>
-  /// Deletes ALL logposts in the LogEntries Table in SQLite
-  /// </summary>
-  /// <returns></returns>
   public async Task DeleteLogTableDataAsync()
   {
-    await _logDB!.Database.ExecuteSqlRawAsync("DELETE FROM LogEntries");
-    InvalidateFilterCache(); // Rensa cache efter borttagning
+    if (LogDBFactory is null) return;
+    await using var db = await LogDBFactory.CreateDbContextAsync();
+    await db.Database.ExecuteSqlRawAsync("DELETE FROM LogEntries");
     await UpdateDataAsync();
   }
 
-  /// <summary>
-  /// Make sure we dispose our resources
-  /// </summary>
-  /// <returns></returns>
   public async ValueTask DisposeAsync()
   {
     if (_hubConnection is not null)
     {
       _hubConnection.Closed -= HubConnection_ClosedAsync;
       await _hubConnection.DisposeAsync();
-    }
-    if (_logDB is not null)
-    {
-      await _logDB.DisposeAsync();
     }
     GC.SuppressFinalize(this);
   }

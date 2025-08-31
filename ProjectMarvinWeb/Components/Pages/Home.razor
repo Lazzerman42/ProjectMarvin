@@ -1,5 +1,6 @@
 ﻿@page "/"
 @inject NavigationManager navMan
+@using Marvin.Common
 @rendermode @(new InteractiveServerRenderMode(prerender: true))
 @attribute [Authorize]
 
@@ -38,7 +39,8 @@
 	</SectionContent>
 
 	<div class="grid-container"><Paginator State="@_pagination" /></div>
-	<QuickGrid Items="FilteredLog" @ref="_myLogGrid" Pagination="@_pagination" >
+
+	<QuickGrid TGridItem="LogEntry" ItemsProvider="LoadLogEntriesAsync" @ref="_myLogGrid" Pagination="@_pagination">
 		<PropertyColumn Property="m => m.LogDate" Title="LogDate" Format="dd-MM-yy HH:mm:ss" Class="LogDate" Sortable="true" IsDefaultSortColumn InitialSortDirection="SortDirection.Descending" Align="Align.Start" />
 		<TemplateColumn Sortable="true" Align="Align.Left" Class="LogIPAdress">
 			<HeaderTemplate><b>IP Address</b></HeaderTemplate>
