@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Components.QuickGrid;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.EntityFrameworkCore;
 using ProjectMarvin.Data;
-using System.Linq.Expressions;
 
 namespace ProjectMarvin.Components.Pages;
 
@@ -33,7 +32,6 @@ public partial class Home : ComponentBase, IAsyncDisposable
       Console.WriteLine($"Error connecting to SignalR: {ex.Message} Retrying");
     }
   }
-
   public async Task UpdateDataAsync()
   {
     await InvokeAsync(async () =>
@@ -73,42 +71,24 @@ public partial class Home : ComponentBase, IAsyncDisposable
       await DeleteLogTableDataAsync();
     }
   }
-
   public string SearchSenderFilterTitle =>
       string.IsNullOrEmpty(_searchSenderFilter) ? "Sender" : "Sender : " + _searchSenderFilter;
-
   public string SearchMesssageFilterTitle =>
       string.IsNullOrEmpty(_searchMessageFilter) ? "Message" : "Message : " + _searchMessageFilter;
-
-  // Hjälpmetod för att extrahera PropertyName från en PropertyColumn
-  private static string? GetPropertyName(ColumnBase<LogEntry>? column)
-  {
-    if (column is null)
-      return null;
-
-    var propColumnType = column.GetType();
-    if (propColumnType.IsGenericType && propColumnType.GetGenericTypeDefinition() == typeof(PropertyColumn<,>))
-    {
-      var exprProp = propColumnType.GetProperty("Property")?.GetValue(column) as LambdaExpression;
-      if (exprProp?.Body is MemberExpression member)
-      {
-        return member.Member.Name;
-      }
-    }
-    return null;
-  }
 
   /// <summary>
   /// ItemsProvider – laddar bara den sida som behövs från DB
   /// </summary>
   private async ValueTask<GridItemsProviderResult<LogEntry>> LoadLogEntriesAsync(GridItemsProviderRequest<LogEntry> request)
   {
-    if (LogDBFactory is null)
+
+    if (LogDBFactory is null || !IsConnected)
       return GridItemsProviderResult.From(Array.Empty<LogEntry>(), 0);
 
     await using var db = await LogDBFactory.CreateDbContextAsync();
 
     IQueryable<LogEntry> query;
+
     if (_showDistinct)
     {
       // Hämta senaste per IP
@@ -121,20 +101,17 @@ public partial class Home : ComponentBase, IAsyncDisposable
     {
       query = db.LogEntries;
     }
-
     // Applicera filter
     if (!string.IsNullOrEmpty(_searchMessageFilter))
     {
       var msgFilter = _searchMessageFilter.ToUpper();
       query = query.Where(l => l.Message!.ToUpper().Contains(msgFilter));
     }
-
     if (!string.IsNullOrEmpty(_searchSenderFilter))
     {
       var senderFilter = _searchSenderFilter.ToUpper();
       query = query.Where(l => l.Sender!.ToUpper().Contains(senderFilter));
     }
-
     // Räkna FÖRE sortering och paginering
     var totalCount = await query.CountAsync();
 
@@ -170,6 +147,8 @@ public partial class Home : ComponentBase, IAsyncDisposable
         .Take(takeCount)
         .ToListAsync();
 
+    Console.WriteLine($"Start {request.StartIndex}  Take {takeCount}\r\n");
+
     return GridItemsProviderResult.From(items, totalCount);
   }
   public async Task ShowDistinctsAsync()
@@ -177,19 +156,6 @@ public partial class Home : ComponentBase, IAsyncDisposable
     _showDistinct = !_showDistinct;
     await UpdateDataAsync();
   }
-
-  public async Task OnSearchMessageChangedAsync(string newValue)
-  {
-    _searchMessageFilter = newValue;
-    await UpdateDataAsync();
-  }
-
-  public async Task OnSearchSenderChangedAsync(string newValue)
-  {
-    _searchSenderFilter = newValue;
-    await UpdateDataAsync();
-  }
-
   private Task StartLogHubAsync()
   {
     _hubConnection = new HubConnectionBuilder()
@@ -200,13 +166,11 @@ public partial class Home : ComponentBase, IAsyncDisposable
     _hubConnection.On("ReceiveLogUpdate", async () => await UpdateDataAsync());
     return Task.CompletedTask;
   }
-
   private async Task HubConnection_ClosedAsync(Exception? arg)
   {
     await SignalRRetryAsync();
     Console.WriteLine("Couldn't reconnect SignalR - check API/SignalR Hub - retrying");
   }
-
   private async Task SignalRRetryAsync()
   {
     Console.WriteLine("HUB Closed");
