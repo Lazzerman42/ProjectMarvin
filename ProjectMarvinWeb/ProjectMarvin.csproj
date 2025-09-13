@@ -6,8 +6,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>aspnet-ProjectMarvin-857122b1-03dc-4cd4-abfa-98123d191a79</UserSecretsId>
   </PropertyGroup>
-
-  <ItemGroup>
+	  
+	<ItemGroup>
     <PackageReference Include="Azure.Identity" Version="1.14.0" />
     <PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid" Version="9.0.5" />
     <PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid.EntityFrameworkAdapter" Version="9.0.5" />

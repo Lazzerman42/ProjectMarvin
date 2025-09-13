@@ -65,6 +65,15 @@ builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSe
 
 var app = builder.Build();
 
+app.UseStaticFiles(new StaticFileOptions
+{
+  OnPrepareResponse = ctx =>
+  {
+    ctx.Context.Response.Headers.Append(
+        "Cache-Control", "public,max-age=2592000"); // 30 dagar
+  }
+});
+
 app.UseMiddleware<IPFilterMiddleware>();
 
 // Configure the HTTP request pipeline.
