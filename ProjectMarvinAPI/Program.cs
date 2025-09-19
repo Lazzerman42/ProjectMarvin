@@ -3,14 +3,16 @@ using Microsoft.EntityFrameworkCore;
 using ProjectMarvinAPI.Data;
 using ProjectMarvinAPI.Hubs;
 using ProjectMarvinAPI.Middleware;
+using Scalar.AspNetCore;
 using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
 using System.Web;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<LogHub>(); // Serverside of SignalR
 
@@ -23,14 +25,13 @@ builder.Services.AddDbContextFactory<ApplicationDbContextLogData>(options =>
 builder.WebHost.ConfigureKestrel(serverOptions => serverOptions.Listen(IPAddress.Parse(GetLocalIPAddress()), 4200));
 
 var app = builder.Build();
-
+app.MapOpenApi();
 // Our SignalR hub - signals frontend that new data has arrived
 app.MapHub<LogHub>("/loghub");
 
 if (app.Environment.IsDevelopment())
 {
-  app.UseSwagger();
-  app.UseSwaggerUI();
+  app.MapScalarApiReference();
 }
 
 static string GetLocalIPAddress()

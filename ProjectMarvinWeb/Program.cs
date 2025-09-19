@@ -7,14 +7,15 @@ using ProjectMarvin.Components.Account;
 using ProjectMarvin.Data;
 using ProjectMarvin.Hubs;
 using ProjectMarvin.Logic;
+using Scalar.AspNetCore;
 using System.Globalization;
 using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSignalR();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+builder.Services.AddOpenApi();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -32,16 +33,17 @@ builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 
 builder.Services.AddAuthentication(options =>
-    {
-      options.DefaultScheme = IdentityConstants.ApplicationScheme;
-      options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
-    })
+{
+  options.DefaultScheme = IdentityConstants.ApplicationScheme;
+  options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+})
     .AddIdentityCookies();
 
 // DBContextFactory for SQLite Identity database
 var IdentityConnection = builder.Configuration.GetConnectionString("IdentityConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContextFactory<ApplicationDbContextIdentity>(options =>
-    options.UseSqlite(IdentityConnection)); builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+    options.UseSqlite(IdentityConnection));
+builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 // Since we are using DbContextFactory here, we make this "helper" for the Identity-components to get a DbContext from The Factory
 builder.Services.AddScoped<ApplicationDbContextIdentity>(p => p.GetRequiredService<IDbContextFactory<ApplicationDbContextIdentity>>().CreateDbContext());
 
@@ -65,33 +67,22 @@ builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSe
 
 var app = builder.Build();
 
-app.UseStaticFiles(new StaticFileOptions
-{
-  OnPrepareResponse = ctx =>
-  {
-    ctx.Context.Response.Headers.Append(
-        "Cache-Control", "public,max-age=2592000"); // 30 dagar
-  }
-});
-
 app.UseMiddleware<IPFilterMiddleware>();
 
 // Configure the HTTP request pipeline.
-//if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment())
 {
-  app.UseSwagger();
-  app.UseSwaggerUI();
-  app.UseMigrationsEndPoint();
+
+
 }
-//else
-//{
-//	app.UseExceptionHandler("/Error", createScopeForErrors: true);
-//	// The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-//	app.UseHsts();
-//}
+else
+{
+  app.UseExceptionHandler("/Error", createScopeForErrors: true);
+  // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+  app.UseHsts();
+}
 
 app.UseHttpsRedirection();
-
 app.UseStaticFiles();
 app.UseAntiforgery();
 
