@@ -2,6 +2,17 @@ html, body {
 	font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
+html, body {
+	margin: 0;
+	padding: 0;
+	height: 100%;
+	overflow-x: hidden; /* Förhindra horizontal scroll */
+}
+
+body {
+	overflow-y: auto; /* Tillåt endast vertikal scroll när det behövs */
+}
+
 a, .btn-link {
 	color: #006bb7;
 }

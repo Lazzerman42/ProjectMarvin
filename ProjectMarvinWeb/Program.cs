@@ -66,6 +66,48 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
 var app = builder.Build();
+app.Use(async (context, next) =>
+{
+  var path = context.Request.Path.Value?.ToLower() ?? "";
+
+  // Lägg till callback som körs PRECIS innan response börjar
+  context.Response.OnStarting(() =>
+  {
+    if (context.Response.StatusCode == 200 && !string.IsNullOrEmpty(Path.GetExtension(path)))
+    {
+      context.Response.Headers.Append("Alt-Svc", "h2=\":443\"; ma=86400, h3=\":443\"; ma=86400");
+
+      var extension = Path.GetExtension(path);
+
+      switch (extension)
+      {
+        case ".css":
+        case ".js":
+        case ".woff":
+        case ".woff2":
+        case ".ttf":
+          context.Response.Headers.Append("Expires", DateTime.UtcNow.AddYears(1).ToString("R"));
+          context.Response.Headers.Append("Cache-Control", "public, max-age=31536000, immutable");
+          break;
+
+        case ".png":
+        case ".jpg":
+        case ".jpeg":
+        case ".gif":
+        case ".svg":
+        case ".ico":
+        case ".webp":
+          context.Response.Headers.Append("Expires", DateTime.UtcNow.AddDays(30).ToString("R"));
+          context.Response.Headers.Append("Cache-Control", "public, max-age=2592000");
+          break;
+      }
+    }
+    return Task.CompletedTask;
+  });
+
+  await next();
+
+});
 
 app.UseMiddleware<IPFilterMiddleware>();
 
@@ -83,7 +125,30 @@ else
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+
+var staticFileOptions = new StaticFileOptions
+{
+  OnPrepareResponse = ctx =>
+  {
+    var path = ctx.Context.Request.Path.Value?.ToLower() ?? "";
+    var headers = ctx.Context.Response.Headers;
+
+    if (path.EndsWith(".css") || path.EndsWith(".js") ||
+        path.EndsWith(".woff") || path.EndsWith(".woff2"))
+    {
+      headers.Expires = DateTime.UtcNow.AddYears(1).ToString("R");
+      headers.CacheControl = "public, max-age=31536000, immutable";
+    }
+    else if (path.EndsWith(".png") || path.EndsWith(".jpg") ||
+             path.EndsWith(".svg") || path.EndsWith(".ico"))
+    {
+      headers.Expires = DateTime.UtcNow.AddDays(30).ToString("R");
+      headers.CacheControl = "public, max-age=2592000";
+    }
+  }
+};
+
+app.MapStaticAssets();
 app.UseAntiforgery();
 
 // Our SignalR hub - signals frontend that new data has arrived
