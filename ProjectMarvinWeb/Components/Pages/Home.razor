@@ -13,10 +13,10 @@
 				<div class="col">
 					<div class="d-flex justify-content-between align-items-center">
 						<div>
-							<button @onclick="ShowConfirmDialog" class="BtnLeft">Delete all LogEntries</button>
+							<button @onclick="ShowConfirmDialog" class="BtnLeft">Delete all</button>
 							<Confirm IsVisible="@_showDialog" OnConfirm="HandleConfirmationAsync" OnClose="CloseDialog" />
 							<button class="BtnLeft" @onclick="() => { _searchMessageFilter = string.Empty; _searchSenderFilter = string.Empty; }">Clear Filters</button>
-							<button @onclick="ShowDistinctsAsync" class="BtnLeft">Toggle Show Latest LogPost per IPAdress/Sender</button>
+							<button @onclick="ShowDistinctsAsync" class="BtnLeft">Toggle Show Latest</button>
 						</div>
 						<div>
 							@if (IsConnected)

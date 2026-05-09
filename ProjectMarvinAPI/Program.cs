@@ -25,6 +25,16 @@ builder.Services.AddDbContextFactory<ApplicationDbContextLogData>(options =>
 builder.WebHost.ConfigureKestrel(serverOptions => serverOptions.Listen(IPAddress.Parse(GetLocalIPAddress()), 4200));
 
 var app = builder.Build();
+
+// Sätt WAL-mode en gång vid startup
+using (var scope = app.Services.CreateScope())
+{
+  var dbFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<ApplicationDbContextLogData>>();
+  using var db = await dbFactory.CreateDbContextAsync();
+  await db.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;");
+  await db.Database.ExecuteSqlRawAsync("PRAGMA cache_size=5000;");
+}
+
 app.MapOpenApi();
 // Our SignalR hub - signals frontend that new data has arrived
 app.MapHub<LogHub>("/loghub");
@@ -51,8 +61,7 @@ static string GetLocalIPAddress()
 /// Here we will map our Minimal API Endpoints
 app.MapGet("/api/protected", [RequireApiKey] () => "This endpoint is protected by API Key")
 .RequireApiKey()
-.WithName("GetProtectedData")
-.WithOpenApi();
+.WithName("GetProtectedData");
 
 // GET LOG - receives a new Log Entry by parsing the GET URL. I know a GET method isn't "right",
 // but it is a good fit for many small-footprint IoT boards with limited power
@@ -69,8 +78,7 @@ app.MapGet("api/Log/{message}", async (string message, HttpContext context) =>
     return Results.Problem(ex.Message);
   }
 })
-.WithName("Log")
-.WithOpenApi();
+.WithName("Log");
 
 // Get LogCount - mostly used to chech that the Databasefile is found :-)
 app.MapGet("api/LogCount", async (HttpContext context) =>
@@ -90,8 +98,7 @@ app.MapGet("api/LogCount", async (HttpContext context) =>
     );
   }
 })
-.WithName("LogCount")
-.WithOpenApi();
+.WithName("LogCount");
 
 // This is an Exmaple of a slightly modified simple GET, where you offer a special Endpoint for
 // a special Application - so you can set default values for just that APP. Here we set the Sender attribute
@@ -103,8 +110,7 @@ app.MapGet("api/Log/ExampleApp/{message}", async (string message, HttpContext co
 
   return $"{DateTime.Now} : {message}";
 })
-.WithName("LogExampleApp")
-.WithOpenApi();
+.WithName("LogExampleApp");
 
 // Receive new LogEntry via Form POST
 app.MapPost("api/Log/", async (HttpRequest request, HttpContext context) =>
@@ -141,8 +147,7 @@ app.MapPost("api/LogEx/", async (LogEntry logEntry, HttpContext context) =>
 // ECHO function - you can use this to check that WiFi is working as expected(ie send something known,
 // and compare the returned result. 
 app.MapGet("api/Echo/{message}", (string message) => message)
-.WithName("Echo")
-.WithOpenApi();
+.WithName("Echo");
 
 // Get LocalTime - many small and simple devices don't have any Real time clock, or maybe they do have a RTC chip
 // but no way to set the time at Boot - so I use this API Call to set the date/time on my RPI Pico W:s
