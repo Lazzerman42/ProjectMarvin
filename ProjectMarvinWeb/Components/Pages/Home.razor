@@ -12,7 +12,7 @@
 			<div class="row">
 				<div class="col">
 					<div class="d-flex justify-content-between align-items-center">
-						<div>
+						<div class="d-flex flex-wrap gap-1 align-items-center">
 							<button @onclick="ShowConfirmDialog" class="BtnLeft">Delete all</button>
 							<Confirm IsVisible="@_showDialog" OnConfirm="HandleConfirmationAsync" OnClose="CloseDialog" />
 							<button class="BtnLeft" @onclick="() => { _searchMessageFilter = string.Empty; _searchSenderFilter = string.Empty; }">Clear Filters</button>
@@ -40,26 +40,28 @@
 
 	<div class="grid-container"><Paginator State="@_pagination" /></div>
 
-	<QuickGrid TGridItem="LogEntry" ItemsProvider="LoadLogEntriesAsync" @ref="_myLogGrid" Pagination="@_pagination">
-		<PropertyColumn Property="m => m.LogDate" Title="LogDate" Format="dd-MM-yy HH:mm:ss" Class="LogDate" Sortable="true" IsDefaultSortColumn InitialSortDirection="SortDirection.Descending" Align="Align.Start" />
-		<TemplateColumn Sortable="true" Align="Align.Left" Class="LogIPAdress">
-			<HeaderTemplate><b>IP Address</b></HeaderTemplate>
-			<ChildContent Context="m">
-				<a href="@($"http://{m.IPAdress}")" target="_blank">@m.IPAdress</a>
-			</ChildContent>
-		</TemplateColumn>
-		<PropertyColumn Property="m => m.LogType" Title="Class" Class="LogType" Sortable="true" Align="Align.Left" />
-		<PropertyColumn Property="m => m.Sender" Sortable="true" Align="Align.Left" Title="@SearchSenderFilterTitle" Class="searchGlass LogSender">
-			<ColumnOptions>
-				<input type="Search" autofocus @bind="_searchSenderFilter" @bind:event="oninput" placeholder="Sender..." />
-			</ColumnOptions>
-		</PropertyColumn>
-		<PropertyColumn Property="m => m.Message" Sortable="true" Align="Align.Left" Class="searchGlass" Title="@SearchMesssageFilterTitle">
-			<ColumnOptions>
-				<input type="Search" autofocus @bind="_searchMessageFilter" @bind:event="oninput" placeholder="Message..." />
-			</ColumnOptions>
-		</PropertyColumn>
-	</QuickGrid>
+	<div class="table-scroll-wrapper">
+		<QuickGrid TGridItem="LogEntry" ItemsProvider="LoadLogEntriesAsync" @ref="_myLogGrid" Pagination="@_pagination">
+			<PropertyColumn Property="m => m.LogDate" Title="LogDate" Format="dd-MM-yy HH:mm:ss" Class="LogDate" Sortable="true" IsDefaultSortColumn InitialSortDirection="SortDirection.Descending" Align="Align.Start" />
+			<TemplateColumn Sortable="true" Align="Align.Left" Class="LogIPAdress">
+				<HeaderTemplate><b>IP Address</b></HeaderTemplate>
+				<ChildContent Context="m">
+					<a href="@($"http://{m.IPAdress}")" target="_blank">@m.IPAdress</a>
+				</ChildContent>
+			</TemplateColumn>
+			<PropertyColumn Property="m => m.LogType" Title="Class" Class="LogType" Sortable="true" Align="Align.Left" />
+			<PropertyColumn Property="m => m.Sender" Sortable="true" Align="Align.Left" Title="@SearchSenderFilterTitle" Class="searchGlass LogSender">
+				<ColumnOptions>
+					<input type="Search" autofocus @bind="_searchSenderFilter" @bind:event="oninput" placeholder="Sender..." />
+				</ColumnOptions>
+			</PropertyColumn>
+			<PropertyColumn Property="m => m.Message" Sortable="true" Align="Align.Left" Class="searchGlass" Title="@SearchMesssageFilterTitle">
+				<ColumnOptions>
+					<input type="Search" autofocus @bind="_searchMessageFilter" @bind:event="oninput" placeholder="Message..." />
+				</ColumnOptions>
+			</PropertyColumn>
+		</QuickGrid>
+	</div>
 </div>
 
 

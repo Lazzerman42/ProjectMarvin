@@ -6,11 +6,11 @@ html, body {
 	margin: 0;
 	padding: 0;
 	height: 100%;
-	overflow-x: hidden; /* Förhindra horizontal scroll */
 }
 
 body {
-	overflow-y: auto; /* Tillåt endast vertikal scroll när det behövs */
+	overflow-y: auto;
+	overflow-x: auto;
 }
 
 a, .btn-link {
@@ -79,16 +79,16 @@ h1:focus {
 .LogDate {
 	padding: 0 30px 0 0 !important;
 	white-space: nowrap;
-	width: 130px; /* Sätt en fast bredd */
-	overflow: hidden; /* Dölj eventuell överflödig text om den är för lång */
-	text-overflow: ellipsis; /* Lägg till ellips (...) om texten är för lång för att få plats */
+	width: 130px; /* Sï¿½tt en fast bredd */
+	overflow: hidden; /* Dï¿½lj eventuell ï¿½verflï¿½dig text om den ï¿½r fï¿½r lï¿½ng */
+	text-overflow: ellipsis; /* Lï¿½gg till ellips (...) om texten ï¿½r fï¿½r lï¿½ng fï¿½r att fï¿½ plats */
 }
 .LogIPAdress {
 	padding: 0 30px 0 0 !important;
 	white-space: nowrap;
-	width: 130px; /* Sätt en fast bredd */
-	overflow: hidden; /* Dölj eventuell överflödig text om den är för lång */
-	text-overflow: ellipsis; /* Lägg till ellips (...) om texten är för lång för att få plats */
+	width: 130px; /* Sï¿½tt en fast bredd */
+	overflow: hidden; /* Dï¿½lj eventuell ï¿½verflï¿½dig text om den ï¿½r fï¿½r lï¿½ng */
+	text-overflow: ellipsis; /* Lï¿½gg till ellips (...) om texten ï¿½r fï¿½r lï¿½ng fï¿½r att fï¿½ plats */
 }
 	.LogIPAdress a {
 		font-weight: 600 !important;
@@ -106,8 +106,11 @@ h1:focus {
 }
 
 .grid-container {
-	width: 650px;
+	width: 100%;
+	max-width: 100%;
 	padding: 0 !important;
+	display: flex;
+	justify-content: center;
 }
 
 .BtnLeft {
@@ -135,6 +138,57 @@ h1:focus {
 }
 
 .connection {
-
 	align-content: end;
+}
+
+/* â”€â”€ Responsiv layout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+
+/* Tablet & mobil landskap: minska kolumnbredder lite */
+@media (max-width: 900px) {
+	.LogSender {
+		width: 130px;
+	}
+}
+
+/* Smal mobil (portrait) â€“ reducera kolumner ytterligare */
+@media (max-width: 575.98px) {
+	.LogDate {
+		width: 95px;
+		padding: 0 8px 0 0 !important;
+	}
+
+	.LogIPAdress {
+		width: 100px;
+		padding: 0 8px 0 0 !important;
+	}
+
+	.LogType {
+		width: 60px;
+	}
+
+	.LogSender {
+		width: 110px;
+	}
+
+	.BtnLeft {
+		font-size: 0.8rem;
+		padding: 0.2rem 0.45rem;
+		margin-right: 3px;
+		margin-bottom: 3px;
+	}
+}
+
+/* Mobillandskap â€“ lite mer luft nÃ¤r skÃ¤rmen roteras */
+@media (max-height: 500px) and (orientation: landscape) {
+	.LogDate {
+		width: 110px;
+	}
+
+	.LogIPAdress {
+		width: 115px;
+	}
+
+	.LogSender {
+		width: 150px;
+	}
 }

@@ -23,5 +23,13 @@
 ::deep table
 {
 	width: 100%;
+	min-width: 560px;
+}
+
+/* Horisontell scrollcontainer för tabellen */
+.table-scroll-wrapper {
+	overflow-x: auto;
+	width: 100%;
+	-webkit-overflow-scrolling: touch;
 }
 
