@@ -1,4 +1,5 @@
 using Marvin.Common;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using ProjectMarvinAPI.Data;
 using ProjectMarvinAPI.Hubs;
@@ -13,8 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSignalR();
-builder.Services.AddSingleton<LogHub>(); // Serverside of SignalR
+builder.Services.AddSignalR(); // IHubContext<LogHub> registreras automatiskt av AddSignalR()
 
 // DBContextFactory for SQLite LogData database
 var LogDataConnection = builder.Configuration.GetConnectionString("LogDataConnection");
@@ -65,11 +65,11 @@ app.MapGet("/api/protected", [RequireApiKey] () => "This endpoint is protected b
 
 // GET LOG - receives a new Log Entry by parsing the GET URL. I know a GET method isn't "right",
 // but it is a good fit for many small-footprint IoT boards with limited power
-app.MapGet("api/Log/{message}", async (string message, HttpContext context) =>
+app.MapGet("api/Log/{message}", async (string message, HttpContext context, IHubContext<LogHub> hubContext) =>
 {
   try
   {
-    await HandleLogRequestAsync(context, HttpUtility.UrlDecode(message), app.Services);
+    await HandleLogRequestAsync(context, HttpUtility.UrlDecode(message), app.Services, hubContext);
 
     return Results.Ok($"{DateTime.Now} : {message}");
   }
@@ -102,25 +102,25 @@ app.MapGet("api/LogCount", async (HttpContext context) =>
 
 // This is an Exmaple of a slightly modified simple GET, where you offer a special Endpoint for
 // a special Application - so you can set default values for just that APP. Here we set the Sender attribute
-app.MapGet("api/Log/ExampleApp/{message}", async (string message, HttpContext context) =>
+app.MapGet("api/Log/ExampleApp/{message}", async (string message, HttpContext context, IHubContext<LogHub> hubContext) =>
 {
-  // Here the last arguemnt(optional) is the Sender - we set it to "Magical App", this mean you can 
+  // Here the last arguemnt(optional) is the Sender - we set it to "Magical App", this mean you can
   // make simple bash/shell/powershell etc with special endpoints with prearranged attributes if you like
-  await HandleLogRequestAsync(context, HttpUtility.UrlDecode(message), app.Services, "Magical App");
+  await HandleLogRequestAsync(context, HttpUtility.UrlDecode(message), app.Services, hubContext, "Magical App");
 
   return $"{DateTime.Now} : {message}";
 })
 .WithName("LogExampleApp");
 
 // Receive new LogEntry via Form POST
-app.MapPost("api/Log/", async (HttpRequest request, HttpContext context) =>
+app.MapPost("api/Log/", async (HttpRequest request, HttpContext context, IHubContext<LogHub> hubContext) =>
 {
   try
   {
     var body = new StreamReader(request.Body);
     string postData = await body.ReadToEndAsync();
 
-    await HandleLogRequestAsync(context, postData, app.Services);
+    await HandleLogRequestAsync(context, postData, app.Services, hubContext);
     return Results.Ok(postData);
   }
   catch (Exception ex)
@@ -131,11 +131,11 @@ app.MapPost("api/Log/", async (HttpRequest request, HttpContext context) =>
 
 // Receive new LogEntry via JSON POST - this is the preferred method for most applications
 // Modern version ment for non IoT devices
-app.MapPost("api/LogEx/", async (LogEntry logEntry, HttpContext context) =>
+app.MapPost("api/LogEx/", async (LogEntry logEntry, HttpContext context, IHubContext<LogHub> hubContext) =>
 {
   try
   {
-    await HandleLogRequestAsyncEx(context, logEntry, app.Services);
+    await HandleLogRequestAsyncEx(context, logEntry, app.Services, hubContext);
     return Results.Ok(logEntry);
   }
   catch (Exception ex)
@@ -183,15 +183,12 @@ static async Task SaveLogEntryAsync(IServiceProvider services, LogEntry logEntry
     Console.WriteLine($"SaveLogEntryAsync Error: {ex.Message} ");
   }
 }
-// Main method for handling saving of LogEntries 
-static async Task HandleLogRequestAsync(HttpContext context, string postData, IServiceProvider services, string sender = "")
+// Main method for handling saving of LogEntries
+static async Task HandleLogRequestAsync(HttpContext context, string postData, IServiceProvider services, IHubContext<LogHub> hubContext, string sender = "")
 {
   try
   {
     var callerIpAddress = context.Connection.RemoteIpAddress?.ToString();
-
-    using var scope = services.CreateScope();
-    var logHub = scope.ServiceProvider.GetRequiredService<LogHub>();
 
     LogEntry logEntry = LogEntry.Load(postData);
     logEntry.IPAdress = callerIpAddress;
@@ -206,7 +203,7 @@ static async Task HandleLogRequestAsync(HttpContext context, string postData, IS
 
     await SaveLogEntryAsync(services, logEntry);
 
-    await logHub.SendLogUpdateAsync();
+    await hubContext.Clients.All.SendAsync("ReceiveLogUpdate");
   }
   catch (Exception ex) // Don't expect the simple IoT devices to handle any errors
   {
@@ -214,14 +211,11 @@ static async Task HandleLogRequestAsync(HttpContext context, string postData, IS
   }
 }
 // Main method for handling saving of LogEntries for modern devices
-static async Task HandleLogRequestAsyncEx(HttpContext context, LogEntry logEntry, IServiceProvider services, string sender = "")
+static async Task HandleLogRequestAsyncEx(HttpContext context, LogEntry logEntry, IServiceProvider services, IHubContext<LogHub> hubContext, string sender = "")
 {
   try
   {
     var callerIpAddress = context.Connection.RemoteIpAddress?.ToString();
-
-    using var scope = services.CreateScope();
-    var logHub = scope.ServiceProvider.GetRequiredService<LogHub>();
 
     logEntry.IPAdress = callerIpAddress;
 
@@ -235,7 +229,7 @@ static async Task HandleLogRequestAsyncEx(HttpContext context, LogEntry logEntry
 
     await SaveLogEntryAsync(services, logEntry);
 
-    await logHub.SendLogUpdateAsync();
+    await hubContext.Clients.All.SendAsync("ReceiveLogUpdate");
   }
   catch (Exception ex) // Don't expect the simple IoT devices to handle any errors
   {

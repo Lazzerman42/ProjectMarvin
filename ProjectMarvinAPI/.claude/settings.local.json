@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\lsiden\\\\source\\\\repos\\\\Lazzerman42\\\\ProjectMarvin\\\\ProjectMarvinAPI\" -Recurse -Directory)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Sort-Object)",
+      "Bash(grep -E \"\\\\.\\(cs|csproj|json\\)$\")",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\lsiden\\\\source\\\\repos\\\\Lazzerman42\\\\ProjectMarvin\\\\ProjectMarvinAPI\" -File | Where-Object {$_.Extension -in '.cs', '.csproj', '.json'} | Select-Object Name, LastWriteTime)",
+      "Read(//c/Users/lsiden/source/repos/Lazzerman42/ProjectMarvin/Common/**)",
+      "Read(//c/Users/lsiden/source/repos/Lazzerman42/ProjectMarvin/**)"
+    ]
+  }
+}
