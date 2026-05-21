@@ -11,7 +11,19 @@
   <link rel="stylesheet" href="ProjectMarvin.styles.css" />
   <link rel="icon" type="image/png" href="favicon.png" />
 
-	<HeadOutlet @rendermode="RenderModeForPage" />
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#00e5cc" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Marvin" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="120x120" href="icons/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="icons/apple-touch-icon-152x152.png" />
+    <link rel="apple-touch-icon" sizes="167x167" href="icons/apple-touch-icon-167x167.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon-180x180.png" />
+
+  <HeadOutlet @rendermode="RenderModeForPage" />
 
 </head>
 
@@ -39,7 +51,13 @@
       }
     }).observe(document.body, { childList: true, subtree: true });
   </script>
-
+    <script>
+        if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(regs => {
+        regs.forEach(r => r.unregister());
+        });
+        }
+    </script>
 </body>
 
 </html>
