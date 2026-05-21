@@ -110,6 +110,14 @@ app.Use(async (context, next) =>
 
 });
 
+app.Use(async (context, next) =>
+{
+  context.Response.Headers.Append("X-Frame-Options", "DENY");
+  context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+  context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+  await next();
+});
+
 app.UseMiddleware<IPFilterMiddleware>();
 
 // Configure the HTTP request pipeline.
@@ -153,7 +161,7 @@ app.MapStaticAssets();
 app.UseAntiforgery();
 
 // Our SignalR hub - signals frontend that new data has arrived
-app.MapHub<LogHub>("/loghub");
+app.MapHub<LogHub>("/loghub").RequireAuthorization();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

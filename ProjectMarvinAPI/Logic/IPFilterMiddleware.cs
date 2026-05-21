@@ -43,6 +43,11 @@ public class IPFilterMiddleware
       return true;
     }
 
+    if (ip.IsIPv4MappedToIPv6)
+      ip = ip.MapToIPv4();
+
+    if (ip.AddressFamily != System.Net.Sockets.AddressFamily.InterNetwork)
+      return false;
 
     byte[] bytes = ip.GetAddressBytes();
     return (bytes[0] == 10 ||

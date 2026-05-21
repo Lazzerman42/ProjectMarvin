@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\lsiden\\\\source\\\\repos\\\\Lazzerman42\\\\ProjectMarvin\\\\ProjectMarvinWeb\" -Force | Select-Object Name, @{Name=\"Type\"; Expression={if \\($_.PSIsContainer\\) {\"Directory\"} else {\"File\"}}} | Sort-Object Name)"
+    ]
+  }
+}
