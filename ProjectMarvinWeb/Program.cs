@@ -172,14 +172,13 @@ app.MapAdditionalIdentityEndpoints();
 //////////////////////////////////////////////////////////////////////////////////
 /// Here we will map our Minimal API Endpoints
 /// 
-
+/*
 app.MapGet("/api/protected", [RequireApiKey] () =>
 {
   return "This endpoint is protected by API Key";
 })
 .RequireApiKey()
-.WithName("GetProtectedData")
-.WithOpenApi();
+.WithName("GetProtectedData");
 
 // GET LOG - receives a new Log Entry by parsing the GET URL. I know a GET method isn't "right",
 // but it is a good fit for many small-footprint IoT boards with limited power
@@ -189,8 +188,8 @@ app.MapGet("api/Log/{message}", async (string message, HttpContext context, IHub
 
   return DateTime.Now + " : " + " : " + message;
 })
-.WithName("Log")
-.WithOpenApi();
+.WithName("Log");
+
 
 // This is an Exmaple of a slightly modified simple GET, where you offer a special Endpoint for
 // a special Application - so you can set default values for just that APP. Here we set the Sender attribute
@@ -202,8 +201,7 @@ app.MapGet("api/Log/ExampleApp/{message}", async (string message, HttpContext co
 
   return DateTime.Now + " : " + " : " + message;
 })
-.WithName("LogExampleApp")
-.WithOpenApi();
+.WithName("LogExampleApp");
 
 // Receive new LogEntry via Form POST
 app.MapPost("api/Log/", async (HttpRequest request, HttpContext context, IHubContext<LogHub> hubContext) =>
@@ -222,8 +220,7 @@ app.MapGet("api/Echo/{message}", (string message, HttpContext context) =>
   // var callerIpAddress = context.Connection.RemoteIpAddress?.ToString();
   return message;
 })
-.WithName("Echo")
-.WithOpenApi();
+.WithName("Echo");
 
 // Get LocalTime - many small and simple devices don't have any Real time clock, or maybe they do have a RTC chip
 // but no way to set the time at Boot - so I use this API Call to set the date/time on my RPI Pico W:s
@@ -267,4 +264,5 @@ static async Task HandleLogRequestAsync(HttpContext context, string postData, IS
   await hubContext.Clients.All.SendAsync("ReceiveLogUpdate");
 }
 //////////////////////////////////////////////////////////////////////////////////
+*/
 app.Run();
