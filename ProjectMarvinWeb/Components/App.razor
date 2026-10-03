@@ -77,7 +77,10 @@
 	[CascadingParameter]
 	private HttpContext HttpContext { get; set; } = default!;
 
+	// No prerendering: the page would otherwise initialize (and load the grid) twice
+	private static readonly IComponentRenderMode _interactiveNoPrerender = new InteractiveServerRenderMode(prerender: false);
+
 	private IComponentRenderMode? RenderModeForPage => HttpContext.Request.Path.StartsWithSegments("/Account")
 			? null
-			: InteractiveServer;
+			: _interactiveNoPrerender;
 }

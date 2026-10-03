@@ -195,12 +195,18 @@ main .top-row.top-row {
 .log-pill.log-success { background: var(--c-success-bg); color: var(--c-success); }
 
 /* Sok-/kolumnmeny, paginering, inputs, dialog */
-.col-options {
-	background: var(--surface);
-	color: var(--text);
-	border: 1px solid var(--border);
-	border-radius: 10px;
-	box-shadow: var(--shadow);
+.col-options, .col-options.col-options {
+	background: var(--surface) !important;
+	color: var(--text) !important;
+	border: 1px solid var(--border) !important;
+	border-radius: 10px !important;
+	box-shadow: var(--shadow) !important;
+}
+
+.col-options input, .col-options input[type="search"] {
+	background: var(--bg) !important;
+	color: var(--text) !important;
+	border: 1px solid var(--border) !important;
 }
 
 input, select, textarea, .form-control, .form-select {
@@ -277,3 +283,22 @@ input, select, textarea, .form-control, .form-select {
 	padding: 0.35rem 0.7rem;
 	line-height: 1.2;
 }
+
+/* -- Visa vilka kolumner som gar att sortera -----------------
+   Sorterbara kolumner far en knapp (button.col-title) med ett tomt .sort-indicator.
+   Ger det en dampad upp/ner-ikon; QuickGrids egen pil tar over nar kolumnen ar sorterad. */
+button.col-title .sort-indicator {
+	background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="%23888" d="M12 3 L19 11 H5 z M12 21 L19 13 H5 z" /></svg>');
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+button.col-title { cursor: pointer; }
+button.col-title:hover .sort-indicator { opacity: 1 !important; }
+
+/* QuickGrids sorteringspil ar svart - gor den synlig i morkt lage */
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme="light"]) .sort-indicator { filter: invert(0.85); }
+}
+:root[data-theme="dark"] .sort-indicator { filter: invert(0.85); }
