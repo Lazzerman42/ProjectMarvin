@@ -1,0 +1,279 @@
+/* Modern tema med ljust/morkt lage (foljer systeminstallningen). Laddas efter app.css. */
+
+:root {
+	color-scheme: light dark;
+
+	--bg: #f5f6fa;
+	--surface: #ffffff;
+	--surface-2: #f1f3f9;
+	--text: #1f2430;
+	--muted: #6b7280;
+	--border: #e6e8ef;
+	--row-hover: #f0f4ff;
+	--link: #3b5bdb;
+	--accent: #4f46e5;
+	--accent-text: #ffffff;
+	--danger: #dc2626;
+	--shadow: 0 1px 2px rgba(16,24,40,0.05), 0 4px 16px rgba(16,24,40,0.06);
+	--sidebar-gradient: linear-gradient(160deg, #1e1b4b 0%, #4338ca 100%);
+
+	--c-info: #2563eb;     --c-info-bg: #e0ebff;
+	--c-warning: #b45309;  --c-warning-bg: #fef0c7;
+	--c-error: #dc2626;    --c-error-bg: #fee2e2;
+	--c-success: #15803d;  --c-success-bg: #dcfce7;
+	--c-debug: #6b7280;    --c-debug-bg: #eceef3;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme="light"]) {
+		--bg: #0f1117;
+		--surface: #171a23;
+		--surface-2: #1e2230;
+		--text: #e6e8ee;
+		--muted: #9aa3b2;
+		--border: #272c3a;
+		--row-hover: #1f2535;
+		--link: #8da2ff;
+		--accent: #7c7cf5;
+		--accent-text: #0f1117;
+		--danger: #f87171;
+		--shadow: 0 1px 2px rgba(0,0,0,0.4), 0 4px 16px rgba(0,0,0,0.35);
+		--sidebar-gradient: linear-gradient(160deg, #0b0a1f 0%, #26225e 100%);
+
+		--c-info: #7aa7ff;     --c-info-bg: #1b2a4d;
+		--c-warning: #fbbf24;  --c-warning-bg: #3d2f0c;
+		--c-error: #f87171;    --c-error-bg: #4a1d1d;
+		--c-success: #4ade80;  --c-success-bg: #14361f;
+		--c-debug: #9aa3b2;    --c-debug-bg: #242938;
+	}
+}
+
+:root[data-theme="dark"] {
+	color-scheme: dark;
+	--bg: #0f1117;
+	--surface: #171a23;
+	--surface-2: #1e2230;
+	--text: #e6e8ee;
+	--muted: #9aa3b2;
+	--border: #272c3a;
+	--row-hover: #1f2535;
+	--link: #8da2ff;
+	--accent: #7c7cf5;
+	--accent-text: #0f1117;
+	--danger: #f87171;
+	--shadow: 0 1px 2px rgba(0,0,0,0.4), 0 4px 16px rgba(0,0,0,0.35);
+	--sidebar-gradient: linear-gradient(160deg, #0b0a1f 0%, #26225e 100%);
+
+	--c-info: #7aa7ff;     --c-info-bg: #1b2a4d;
+	--c-warning: #fbbf24;  --c-warning-bg: #3d2f0c;
+	--c-error: #f87171;    --c-error-bg: #4a1d1d;
+	--c-success: #4ade80;  --c-success-bg: #14361f;
+	--c-debug: #9aa3b2;    --c-debug-bg: #242938;
+}
+
+:root[data-theme="light"] { color-scheme: light; }
+
+html, body {
+	background: var(--bg);
+	color: var(--text);
+	font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+a, .btn-link { color: var(--link); }
+
+main .top-row.top-row {
+	background-color: var(--bg);
+	border-bottom: 0;
+}
+
+/* -- Knappar ------------------------------------------------ */
+.BtnLeft {
+	background: var(--surface);
+	color: var(--text);
+	border: 1px solid var(--border);
+	border-radius: 999px;
+	padding: 0.35rem 0.95rem;
+	font-size: 0.9rem;
+	box-shadow: 0 1px 2px rgba(16,24,40,0.06);
+	cursor: pointer;
+	transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.BtnLeft:hover {
+	background: var(--accent);
+	border-color: var(--accent);
+	color: var(--accent-text);
+}
+
+.BtnLeft.BtnDanger {
+	color: var(--danger);
+	border-color: var(--danger);
+}
+
+.BtnLeft.BtnDanger:hover {
+	background: var(--danger);
+	border-color: var(--danger);
+	color: #fff;
+}
+
+.closeButton {
+	background: transparent;
+	color: var(--text);
+	border: 0;
+	border-radius: 50%;
+}
+
+.closeButton:hover { background: var(--accent); color: var(--accent-text); }
+
+/* -- Tabell (desktop = kort) -------------------------------- */
+.table-scroll-wrapper {
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: 14px;
+	box-shadow: var(--shadow);
+	padding: 4px 16px 8px;
+	margin: 8px 10px 16px 0;
+}
+
+.table-scroll-wrapper table { border-collapse: collapse; }
+
+.table-scroll-wrapper thead tr { height: 2.6rem; }
+
+.table-scroll-wrapper th {
+	font-size: 0.72rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--muted);
+	border-bottom: 1px solid var(--border);
+	vertical-align: middle;
+}
+
+.table-scroll-wrapper th b { font-weight: 600; }
+
+.table-scroll-wrapper tbody tr {
+	background: transparent !important;
+	height: 2.7rem;
+	border-bottom: 1px solid var(--border);
+	transition: background-color 0.15s;
+}
+
+.table-scroll-wrapper tbody tr:last-child { border-bottom: 0; }
+.table-scroll-wrapper tbody tr:hover { background: var(--row-hover) !important; }
+
+.table-scroll-wrapper td { vertical-align: middle; }
+
+.LogDate, .LogIPAdress { color: var(--muted); font-variant-numeric: tabular-nums; }
+.LogIPAdress a { color: var(--muted) !important; font-weight: 500 !important; }
+.LogIPAdress a:hover { color: var(--link) !important; text-decoration: underline !important; }
+.LogSender { font-weight: 600; }
+
+/* Fargad kant till vanster per loggtyp (desktop) */
+@media (min-width: 641px) {
+	.table-scroll-wrapper tbody td:first-child { padding-left: 12px !important; }
+	.table-scroll-wrapper tbody tr.log-info td:first-child    { box-shadow: inset 3px 0 0 var(--c-info); }
+	.table-scroll-wrapper tbody tr.log-warning td:first-child { box-shadow: inset 3px 0 0 var(--c-warning); }
+	.table-scroll-wrapper tbody tr.log-error td:first-child   { box-shadow: inset 3px 0 0 var(--c-error); }
+	.table-scroll-wrapper tbody tr.log-success td:first-child { box-shadow: inset 3px 0 0 var(--c-success); }
+	.table-scroll-wrapper tbody tr.log-debug td:first-child   { box-shadow: inset 3px 0 0 var(--c-debug); }
+}
+
+/* Loggtyp som "pill" */
+.log-pill {
+	display: inline-block;
+	padding: 1px 10px;
+	border-radius: 999px;
+	font-size: 0.75rem;
+	font-weight: 600;
+	line-height: 1.5;
+	background: var(--c-debug-bg);
+	color: var(--c-debug);
+}
+.log-pill.log-info    { background: var(--c-info-bg);    color: var(--c-info); }
+.log-pill.log-warning { background: var(--c-warning-bg); color: var(--c-warning); }
+.log-pill.log-error   { background: var(--c-error-bg);   color: var(--c-error); }
+.log-pill.log-success { background: var(--c-success-bg); color: var(--c-success); }
+
+/* Sok-/kolumnmeny, paginering, inputs, dialog */
+.col-options {
+	background: var(--surface);
+	color: var(--text);
+	border: 1px solid var(--border);
+	border-radius: 10px;
+	box-shadow: var(--shadow);
+}
+
+input, select, textarea, .form-control, .form-select {
+	background-color: var(--surface);
+	color: var(--text);
+	border: 1px solid var(--border);
+	border-radius: 8px;
+}
+
+.form-floating > label, .text-muted { color: var(--muted) !important; }
+
+.card, .list-group-item { background: var(--surface); color: var(--text); border-color: var(--border); }
+
+.modal-content {
+	background: var(--surface);
+	color: var(--text);
+	border: 1px solid var(--border);
+	border-radius: 14px;
+}
+.modal-header, .modal-footer { border-color: var(--border); }
+
+.paginator { color: var(--muted); }
+
+/* -- Mobil: varje post ar ett eget kort --------------------- */
+@media (max-width: 640.98px) {
+	.table-scroll-wrapper {
+		background: transparent;
+		border: 0;
+		box-shadow: none;
+		padding: 0;
+		margin: 8px 10px 16px 0;
+	}
+
+	.table-scroll-wrapper thead tr { height: auto; border-bottom: 0; }
+	.table-scroll-wrapper th { border-bottom: 0; }
+
+	.table-scroll-wrapper tbody tr {
+		height: auto;
+		background: var(--surface) !important;
+		border: 1px solid var(--border);
+		border-radius: 12px;
+		margin-bottom: 8px;
+		padding: 8px 12px;
+		box-shadow: var(--shadow);
+	}
+	.table-scroll-wrapper tbody tr:last-child { border-bottom: 1px solid var(--border); }
+	.table-scroll-wrapper tbody tr:hover { background: var(--surface) !important; }
+
+	.table-scroll-wrapper tbody tr.log-info    { border-left: 4px solid var(--c-info); }
+	.table-scroll-wrapper tbody tr.log-warning { border-left: 4px solid var(--c-warning); }
+	.table-scroll-wrapper tbody tr.log-error   { border-left: 4px solid var(--c-error); }
+	.table-scroll-wrapper tbody tr.log-success { border-left: 4px solid var(--c-success); }
+	.table-scroll-wrapper tbody tr.log-debug   { border-left: 4px solid var(--c-debug); }
+
+	.table-scroll-wrapper tbody td.LogSender { color: var(--text); }
+	.table-scroll-wrapper tbody td.LogIPAdress { color: var(--muted); }
+
+	.BtnLeft {
+		font-size: 0.8rem;
+		padding: 0.25rem 0.7rem;
+	}
+}
+
+/* Morkt lage: ikonerna i pagineringen ar morka bakgrundsbilder */
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme="light"]) .paginator nav button,
+	:root:not([data-theme="light"]) .col-options-button { filter: invert(0.85); }
+}
+:root[data-theme="dark"] .paginator nav button,
+:root[data-theme="dark"] .col-options-button { filter: invert(0.85); }
+
+/* -- Tema-knapp (ligger bland knapparna i verktygsraden) --- */
+.BtnLeft.theme-toggle {
+	padding: 0.35rem 0.7rem;
+	line-height: 1.2;
+}

@@ -1,13 +1,4 @@
-﻿/* Stripe effect on Quickgrid Lines */
-::deep tbody tr {
-	background-color: rgba(255,255,255);
-}
-
-
-::deep tbody tr:nth-child(even) {
-		background: rgb(133, 133, 133, 0.40);
-	}
-::deep tr:has(> td:not(:empty)) > td {
+﻿::deep tr:has(> td:not(:empty)) > td {
 	display: table-cell;
 }
 

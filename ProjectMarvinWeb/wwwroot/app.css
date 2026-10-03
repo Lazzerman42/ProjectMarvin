@@ -62,7 +62,7 @@ h1:focus {
 }
 
 .sidebar {
-	background-image: linear-gradient(120deg, rgb(2, 0, 0) 0%, #0000FF 70%) !important;
+	background-image: var(--sidebar-gradient) !important;
 }
 
 
@@ -92,7 +92,7 @@ h1:focus {
 }
 	.LogIPAdress a {
 		font-weight: 600 !important;
-		color: black !important;
+		color: var(--text) !important;
 		text-decoration: none !important;
 	}
 .LogType {

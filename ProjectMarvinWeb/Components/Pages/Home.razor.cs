@@ -44,6 +44,18 @@ public partial class Home : ComponentBase, IAsyncDisposable
     });
   }
 
+  private readonly GridSort<LogEntry> _sortByType = GridSort<LogEntry>.ByAscending(m => m.LogType);
+
+  // Maps a free-text LogType to a CSS class used for the colored pill / row accent
+  private static string TypeClass(string? logType) => (logType ?? "").Trim().ToLowerInvariant() switch
+  {
+    "info" or "information" => "log-info",
+    "warn" or "warning" => "log-warning",
+    "error" or "err" or "fatal" or "critical" => "log-error",
+    "ok" or "success" => "log-success",
+    _ => "log-debug"
+  };
+
   private readonly PaginationState _pagination = new() { ItemsPerPage = 42 };
   public bool IsConnected => _hubConnection?.State == HubConnectionState.Connected;
 

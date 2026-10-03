@@ -6,8 +6,19 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 	<base href="/" />
   
+  <script>
+    (function () { try { var t = localStorage.getItem('theme'); if (t) document.documentElement.setAttribute('data-theme', t); } catch (e) { } })();
+    function toggleTheme() {
+      var d = document.documentElement;
+      var cur = d.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      var next = cur === 'dark' ? 'light' : 'dark';
+      d.setAttribute('data-theme', next);
+      try { localStorage.setItem('theme', next); } catch (e) { }
+    }
+  </script>
   <link rel="stylesheet" href="bootstrap/bootstrap.min.css" />
   <link rel="stylesheet" href="app.css" />
+  <link rel="stylesheet" href="theme.css" />
   <link rel="stylesheet" href="ProjectMarvin.styles.css" />
   <link rel="icon" type="image/png" href="favicon.png" />
 
