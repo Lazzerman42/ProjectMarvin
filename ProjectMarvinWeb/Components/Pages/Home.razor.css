@@ -23,7 +23,12 @@
 ::deep table
 {
 	width: 100%;
-	min-width: 560px;
+}
+
+@media (min-width: 641px) {
+	::deep table {
+		min-width: 560px;
+	}
 }
 
 /* Horisontell scrollcontainer för tabellen */

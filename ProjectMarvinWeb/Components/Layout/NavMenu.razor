@@ -1,10 +1,12 @@
-﻿@implements IDisposable
+﻿@using Microsoft.AspNetCore.Components.Sections
+@implements IDisposable
 
 @inject NavigationManager NavigationManager
 
 <div class="top-row ps-3 navbar navbar-dark">
 	<div class="container-fluid">
 		<a class="navbar-brand" href="">Project Marvin</a>
+		<SectionOutlet SectionName="nav-status" />
 	</div>
 </div>
 

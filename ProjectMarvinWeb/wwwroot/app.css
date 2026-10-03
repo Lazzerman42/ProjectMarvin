@@ -150,25 +150,66 @@ h1:focus {
 	}
 }
 
-/* Smal mobil (portrait) – reducera kolumner ytterligare */
-@media (max-width: 575.98px) {
-	.LogDate {
-		width: 95px;
-		padding: 0 8px 0 0 !important;
+/* Mobil: varje logpost blir ett kort med tre rader (inget sidledsskroll)
+   Rad 1: datum + typ   Rad 2: sender + IP   Rad 3: meddelande */
+@media (max-width: 640.98px) {
+	.table-scroll-wrapper {
+		overflow-x: visible;
 	}
 
-	.LogIPAdress {
-		width: 100px;
-		padding: 0 8px 0 0 !important;
+	.table-scroll-wrapper table,
+	.table-scroll-wrapper tbody {
+		display: block;
+		width: 100%;
+		min-width: 0;
 	}
 
-	.LogType {
-		width: 60px;
+	/* Rubrikraden blir en kompakt rad med sorterings-/filterknappar */
+	.table-scroll-wrapper thead,
+	.table-scroll-wrapper thead tr {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 2px 14px;
+		width: 100%;
 	}
 
-	.LogSender {
-		width: 110px;
+	.table-scroll-wrapper thead th {
+		display: block;
+		width: auto;
+		padding: 2px 0 !important;
+		font-size: 0.8rem;
 	}
+
+	.table-scroll-wrapper tbody tr {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		grid-template-areas:
+			"date type"
+			"sender ip"
+			"msg msg";
+		gap: 2px 12px;
+		padding: 6px 8px;
+		border-bottom: 1px solid rgba(0,0,0,0.15);
+	}
+
+	.table-scroll-wrapper tbody td {
+		display: block;
+		width: auto;
+		min-width: 0;
+		padding: 0 !important;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		text-align: left !important;
+	}
+
+	.table-scroll-wrapper tbody td.LogDate { grid-area: date; font-size: 0.8rem; opacity: 0.75; }
+	.table-scroll-wrapper tbody td.LogType { grid-area: type; font-size: 0.8rem; font-weight: 600; text-align: right !important; }
+	.table-scroll-wrapper tbody td.LogSender { grid-area: sender; font-weight: 600; white-space: nowrap; }
+	.table-scroll-wrapper tbody td.LogIPAdress { grid-area: ip; font-size: 0.8rem; text-align: right !important; }
+	.table-scroll-wrapper tbody td.LogMessage { grid-area: msg; white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
+
+	/* Tomma celler ska fortfarande ta plats i griden (undviker att rader hoppar) */
+	.table-scroll-wrapper tbody td:empty { display: block; }
 
 	.BtnLeft {
 		font-size: 0.8rem;
@@ -190,5 +231,53 @@ h1:focus {
 
 	.LogSender {
 		width: 150px;
+	}
+}
+/* SignalR-status i titelraden */
+.signalr-status {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	margin-left: 10px;
+	font-size: 0.8rem;
+	color: rgba(255,255,255,0.8);
+	vertical-align: middle;
+}
+
+.signalr-dot {
+	width: 11px;
+	height: 11px;
+	border-radius: 50%;
+	background: #2dcd4d;
+	box-shadow: 0 0 6px 1px rgba(45,205,77,0.8);
+}
+
+.signalr-status.disconnected .signalr-dot {
+	background: #e03030;
+	box-shadow: 0 0 6px 1px rgba(224,48,48,0.8);
+	animation: signalr-blink 1s infinite;
+}
+
+@keyframes signalr-blink { 50% { opacity: 0.35; } }
+
+@media (max-width: 640.98px) {
+	.signalr-label { display: none; }
+}
+
+/* Bootstrap lägger space-between på navbar: håll titel + status till vänster, bort från hamburgarmenyn */
+.navbar > .container-fluid {
+	justify-content: flex-start;
+	padding-right: 4.5rem;
+}
+
+/* Desktop: ingen hamburgarmeny, så statusprickens plats är längst till höger i titelraden */
+@media (min-width: 641px) {
+	.navbar > .container-fluid {
+		justify-content: space-between;
+		padding-right: var(--bs-gutter-x, 0.75rem);
+	}
+
+	.signalr-status {
+		margin-left: 0;
 	}
 }
