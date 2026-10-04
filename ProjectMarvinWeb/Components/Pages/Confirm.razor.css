@@ -1,0 +1,76 @@
+.backdrop {
+	position: fixed;
+	inset: 0;
+	z-index: 100;
+	display: grid;
+	place-items: center;
+	padding: 20px;
+	background: rgb(0 0 0 / 0.45);
+}
+
+.dialog {
+	width: 100%;
+	max-width: 380px;
+	padding: 20px;
+	border-radius: 12px;
+	border: 1px solid var(--border-default);
+	background: var(--bg-surface);
+	color: var(--text-primary);
+	box-shadow: 0 16px 48px rgb(0 0 0 / 0.3);
+}
+
+h2 {
+	margin: 0;
+	font-size: 16px;
+	font-weight: 600;
+}
+
+p {
+	margin: 8px 0 20px;
+	font-size: 14px;
+	color: var(--text-secondary);
+}
+
+.actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+}
+
+.actions button {
+	height: 34px;
+	padding: 0 14px;
+	border-radius: 8px;
+	font: inherit;
+	font-size: 13px;
+	cursor: pointer;
+}
+
+.btn-cancel {
+	border: 1px solid var(--border-control);
+	background: var(--bg-control);
+	color: var(--text-button);
+}
+
+.btn-cancel:hover {
+	background: var(--bg-nav-hover);
+}
+
+.btn-delete {
+	border: 1px solid transparent;
+	background: var(--danger-base);
+	color: white;
+	font-weight: 500;
+}
+
+.btn-delete:hover {
+	background: color-mix(in oklch, var(--danger-base) 85%, black);
+}
+
+@media (max-width: 640.98px) {
+	.actions button {
+		height: 44px;
+		flex: 1;
+		border-radius: 12px;
+	}
+}

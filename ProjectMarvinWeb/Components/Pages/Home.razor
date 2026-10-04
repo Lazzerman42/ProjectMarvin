@@ -1,61 +1,103 @@
-﻿@page "/"
-@inject NavigationManager navMan
+@page "/"
 @using Marvin.Common
 @attribute [Authorize]
 
-<PageTitle>Realtime Log</PageTitle>
+<PageTitle>Log · Project Marvin</PageTitle>
 
-<div>
-	<SectionContent SectionName="nav-status">
-		<span class="signalr-status @(IsConnected ? "connected" : "disconnected")" role="status" title="@(IsConnected ? "SignalR connected" : "SignalR disconnected")">
-			<span class="signalr-dot"></span><span class="signalr-label">@(IsConnected ? "Live" : "Offline")</span>
-		</span>
-	</SectionContent>
-	<SectionContent SectionName="top-bar">
-		<div class="container-fluid">
-			<div class="row">
-				<div class="col">
-					<div class="d-flex justify-content-center align-items-center">
-						<div class="d-flex flex-wrap gap-1 align-items-center justify-content-center">
-							<button @onclick="ShowConfirmDialog" class="BtnLeft BtnDanger">Delete all</button>
-							<Confirm IsVisible="@_showDialog" OnConfirm="HandleConfirmationAsync" OnClose="CloseDialog" />
-							<button class="BtnLeft" @onclick="ClearFiltersAsync">Clear Filters</button>
-							<button @onclick="ShowDistinctsAsync" class="BtnLeft">Toggle Show Latest</button>
-							<button type="button" class="BtnLeft theme-toggle" title="Switch light/dark mode" aria-label="Switch light/dark mode" onclick="toggleTheme()">◐</button>
-						</div>
-					</div>
+<SectionContent SectionName="nav-status">
+	<span class="live @(IsConnected ? "on" : "off")" role="status" title="@(IsConnected ? "SignalR connected" : "SignalR disconnected")">
+		<span class="live-dot"></span>@(IsConnected ? "Live" : "Offline")
+	</span>
+</SectionContent>
+<SectionContent SectionName="nav-log-count">
+	<span class="tab-count">@_allTotal</span>
+</SectionContent>
+
+<div class="log-page">
+	<header class="log-title">
+		<h1>Log</h1>
+		<div class="subtitle">@Subtitle</div>
+	</header>
+
+	<section class="log-card">
+		<div class="toolbar">
+			<label class="search">
+				<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" stroke-width="1.6" /><path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg>
+				<input type="search" placeholder="Search sender, message or IP" aria-label="Search sender, message or IP"
+					   value="@_query" @oninput="OnQueryInputAsync" />
+			</label>
+			<div class="seg" role="group" aria-label="Level">
+				@foreach (var level in Levels)
+				{
+					<button type="button" class="@(level == _level ? "active" : null)" aria-pressed="@(level == _level)" @onclick="() => SetLevelAsync(level)">@level</button>
+				}
+			</div>
+			@if (HasFilters)
+			{
+				<button type="button" class="link-btn desk" @onclick="ClearFiltersAsync">Clear filters</button>
+			}
+			<span class="divider desk"></span>
+			<button type="button" class="ghost-btn desk" role="switch" aria-checked="@_showLatest" title="Show only the latest entry per device" @onclick="ToggleShowLatestAsync">
+				<span class="switch @(_showLatest ? "on" : null)"><span class="knob"></span></span>Show latest
+			</button>
+			<span class="divider desk"></span>
+			<button type="button" class="danger-btn desk" @onclick="ShowConfirmDialog">Delete all</button>
+		</div>
+
+		<div class="meta mob">
+			<span>
+				@CountLabel
+				@if (HasFilters)
+				{
+					<button type="button" class="link-btn" @onclick="ClearFiltersAsync">Clear</button>
+				}
+			</span>
+			<button type="button" class="latest-mob" role="switch" aria-checked="@_showLatest" title="Show only the latest entry per device" @onclick="ToggleShowLatestAsync">
+				Show latest<span class="switch @(_showLatest ? "on" : null)"><span class="knob"></span></span>
+			</button>
+		</div>
+
+		<div class="scroll" @ref="_scrollEl">
+			<div class="log-row head">
+				<button type="button" class="h" @onclick="() => SortByAsync(SortColumn.Time)">Time<span class="arrow @ArrowClass(SortColumn.Time)">@Arrow(SortColumn.Time)</span></button>
+				<button type="button" class="h" @onclick="() => SortByAsync(SortColumn.Level)">Level<span class="arrow @ArrowClass(SortColumn.Level)">@Arrow(SortColumn.Level)</span></button>
+				<button type="button" class="h" @onclick="() => SortByAsync(SortColumn.Sender)">Sender<span class="arrow @ArrowClass(SortColumn.Sender)">@Arrow(SortColumn.Sender)</span></button>
+				<button type="button" class="h" @onclick="() => SortByAsync(SortColumn.Ip)">IP address<span class="arrow @ArrowClass(SortColumn.Ip)">@Arrow(SortColumn.Ip)</span></button>
+				<button type="button" class="h" @onclick="() => SortByAsync(SortColumn.Message)">Message<span class="arrow @ArrowClass(SortColumn.Message)">@Arrow(SortColumn.Message)</span></button>
+			</div>
+
+			@foreach (var entry in _items)
+			{
+				<div class="log-row @TypeClass(entry.LogType)" @key="entry.Id">
+					<div class="c-time"><span class="time">@entry.LogDate?.ToString("HH:mm:ss")</span><span class="date">@entry.LogDate?.ToString("dd-MM-yy")</span></div>
+					<div class="c-level"><span class="badge"><span class="dot"></span>@entry.LogType</span></div>
+					<div class="c-sender">@Highlight(entry.Sender)</div>
+					<div class="c-ip"><a href="@($"http://{entry.IPAdress}")" target="_blank" rel="noopener">@Highlight(entry.IPAdress)</a></div>
+					<div class="c-msg">@Highlight(entry.Message)</div>
 				</div>
+			}
+
+			@if (_loaded && _items.Count == 0)
+			{
+				<div class="empty">No log entries match</div>
+			}
+
+			<div class="sentinel" @ref="_sentinel">
+				@if (_loading)
+				{
+					<span>Loading…</span>
+				}
 			</div>
 		</div>
-	</SectionContent>
 
-	<div class="grid-container"><Paginator State="@_pagination" /></div>
+		<footer class="foot">
+			<span class="desk">@CountLabel</span>
+			<button type="button" class="danger-btn mob" @onclick="ShowConfirmDialog">Delete all</button>
+			<button type="button" class="top-btn" title="Back to top" aria-label="Back to top" @onclick="ScrollToTopAsync">
+				<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M8 13V3M3.5 7.5L8 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+			</button>
+		</footer>
+	</section>
 
-	<div class="table-scroll-wrapper">
-		<QuickGrid TGridItem="LogEntry" ItemsProvider="LoadLogEntriesAsync" @ref="_myLogGrid" Pagination="@_pagination" RowClass="@(m => TypeClass(m.LogType))">
-			<PropertyColumn Property="m => m.LogDate" Title="LogDate" Format="dd-MM-yy HH:mm:ss" Class="LogDate" Sortable="true" IsDefaultSortColumn InitialSortDirection="SortDirection.Descending" Align="Align.Start" />
-			<TemplateColumn Title="IP Address" SortBy="@_sortByIp" Align="Align.Left" Class="LogIPAdress">
-				<ChildContent Context="m">
-					<a href="@($"http://{m.IPAdress}")" target="_blank">@m.IPAdress</a>
-				</ChildContent>
-			</TemplateColumn>
-			<TemplateColumn Title="Class" Class="LogType" SortBy="@_sortByType" Align="Align.Left">
-				<span class="log-pill @TypeClass(context.LogType)">@context.LogType</span>
-			</TemplateColumn>
-			<PropertyColumn Property="m => m.Sender" Sortable="true" Align="Align.Left" Title="@SearchSenderFilterTitle" Class="searchGlass LogSender">
-				<ColumnOptions>
-					<input type="Search" autofocus @bind="_searchSenderFilter" @bind:event="oninput" @bind:after="RefreshGridAsync" placeholder="Sender..." />
-				</ColumnOptions>
-			</PropertyColumn>
-			<PropertyColumn Property="m => m.Message" Sortable="true" Align="Align.Left" Class="searchGlass LogMessage" Title="@SearchMesssageFilterTitle">
-				<ColumnOptions>
-					<input type="Search" autofocus @bind="_searchMessageFilter" @bind:event="oninput" @bind:after="RefreshGridAsync" placeholder="Message..." />
-				</ColumnOptions>
-			</PropertyColumn>
-		</QuickGrid>
-	</div>
+	<Confirm IsVisible="@_showDialog" OnConfirm="HandleConfirmationAsync" OnClose="CloseDialog" />
 </div>
-
-
-
-

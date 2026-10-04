@@ -26,7 +26,6 @@ builder.Services.AddRazorComponents()
 //builder.Services.AddSingleton<LogEntries>(); // not used now, we use SQLite
 // IHubContext<LogHub> registreras automatiskt av AddSignalR()
 
-builder.Services.AddQuickGridEntityFrameworkAdapter();
 
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();

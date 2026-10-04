@@ -26,7 +26,7 @@ Client examples for exercising the API: `ProjectMarvinAPI/Example Code/` (`API T
 
 ## Architecture
 
-Data flow: device → API endpoint (`GET api/Log/{message}`, `POST api/Log/`, `POST api/LogEx/` JSON) → EF Core saves to `SQLiteLogData.db` → API broadcasts `ReceiveLogUpdate` on its SignalR hub `/loghub` → `Home.razor` (Web) holds a `HubConnection` to the **API's** hub (URL from the `SignalRAPI` connection string) and re-queries its QuickGrid. Reconnect logic and the green/red status indicator are in `Home.razor.cs`.
+Data flow: device → API endpoint (`GET api/Log/{message}`, `POST api/Log/`, `POST api/LogEx/` JSON) → EF Core saves to `SQLiteLogData.db` → API broadcasts `ReceiveLogUpdate` on its SignalR hub `/loghub` → `Home.razor` (Web) holds a `HubConnection` to the **API's** hub (URL from the `SignalRAPI` connection string) and reloads its list. Reconnect logic and the Live/Offline pill are in `Home.razor.cs`.
 
 Non-obvious points:
 - **Leftover code in Web:** `Hubs`, `Logic` and `Data` folders exist as parallel copies in the API and Web projects (LogHub, IPFilterMiddleware, APIKeyEndPointValidator, FixedSizeList, LogEntries, LogData DbContext). The API endpoints in `ProjectMarvinWeb/Program.cs` are commented out (the API project owns them), so `APIKeyEndPointValidator`, `FixedSizeList` and `LogEntries` are unused in Web, and `IPFilterMiddleware` only matches `/api/` paths that no longer exist there. Web still maps its own `/loghub`, but `Home.razor.cs` connects to the API's hub, so Web's hub is not used by the UI.
@@ -34,5 +34,6 @@ Non-obvious points:
 - **Error policy:** log-saving errors are deliberately swallowed and written to the console, since simple IoT clients can't handle errors.
 - **Security:** `IPFilterMiddleware` restricts to private LAN ranges; `[RequireApiKey]`/`APIKeyEndPointValidator` is only applied to `/api/protected`; Web's `/loghub` requires authorization and `Home.razor` uses `[Authorize]`. Web's `Register` page requires login so nobody can self-register. The seeded login is in the README — change before exposing publicly.
 - The API's `GetLocalIPAddress()` throws if the machine has no IPv4 adapter.
-- QuickGrid styling uses scoped CSS (`Home.razor.css`, `::deep`), so the grid must sit inside a container element.
+- **Log list (`Home`):** a hand-built CSS-grid list, not QuickGrid. Rows load in batches of 20 (infinite scroll: `wwwroot/marvin.js` watches a sentinel element with an IntersectionObserver and calls `LoadMoreAsync`). Live updates reload as many rows as are already shown. The same markup is shown as table rows on desktop and as cards under 641px, and the mobile view has no sorting. Search covers Sender, Message and IP through `ApplicationDbContextLogData.UnicodeUpper` (a SQLite function registered per connection, because SQLite's `upper()` only handles ASCII, so 'ä' would not match 'Ä').
+- **Styling:** the design tokens (dark/light, switched via `data-theme` + localStorage) are in `wwwroot/theme.css`, and the Geist fonts are self-hosted in `wwwroot/fonts`. Don't use the class name `row` (it clashes with Bootstrap, which is still loaded for the Account pages). Stylesheets are linked through `@Assets[...]` because `Program.cs` caches `.css`/`.js` as immutable.
 - Web is a PWA (`wwwroot/manifest.webmanifest`, `service-worker.js`).

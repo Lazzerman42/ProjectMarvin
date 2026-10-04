@@ -1,25 +1,91 @@
-﻿@using Microsoft.AspNetCore.Components.Sections
 @inherits LayoutComponentBase
+@implements IDisposable
+@inject NavigationManager NavigationManager
 
-<div class="page">
-    <div class="sidebar" >
-        <NavMenu />
-    </div>
+<div class="app">
+	<header class="topbar">
+		<div class="brand">
+			<img src="Images/Marvin1.jpg" class="logo" alt="" />
+			<a class="brand-name" href="">Project Marvin</a>
+			<SectionOutlet SectionName="nav-status" />
+		</div>
 
-    <main>
-    <div class="top-row px-4 d-flex justify-content-start">
-          <SectionOutlet SectionName="top-bar"  />
-        
-        </div>
+		<AuthorizeView>
+			<Authorized>
+				<nav class="tabs">
+					<NavLink class="tab" href="" Match="NavLinkMatch.All">Log<SectionOutlet SectionName="nav-log-count" /></NavLink>
+					<NavLink class="tab" href="Account/Register">Register</NavLink>
+				</nav>
+			</Authorized>
+		</AuthorizeView>
 
-        <div class="" style="padding-left: 10px;">
-            @Body
-        </div>
-    </main>
+		<div class="right">
+			<button type="button" class="icon-btn theme-toggle" title="Switch light/dark mode" aria-label="Switch light/dark mode" onclick="toggleTheme()">
+				<span class="theme-icon"></span>
+			</button>
+			<AuthorizeView>
+				<Authorized>
+					<span class="divider desk"></span>
+					<NavLink class="email desk" href="Account/Manage">@context.User.Identity?.Name</NavLink>
+					<span class="avatar desk" aria-hidden="true">@Initial(context.User.Identity?.Name)</span>
+					<form class="desk" action="Account/Logout" method="post">
+						<AntiforgeryToken />
+						<input type="hidden" name="ReturnUrl" value="@_currentUrl" />
+						<button type="submit" class="text-btn">Logout</button>
+					</form>
+
+					<details class="account-menu mob">
+						<summary class="avatar" aria-label="Account menu">@Initial(context.User.Identity?.Name)</summary>
+						<div class="menu" onclick="if (event.target.closest('a')) this.parentElement.open = false">
+							<a class="menu-email" href="Account/Manage">@context.User.Identity?.Name</a>
+							<a class="menu-item" href="">Log</a>
+							<a class="menu-item" href="Account/Register">Register</a>
+							<form action="Account/Logout" method="post">
+								<AntiforgeryToken />
+								<input type="hidden" name="ReturnUrl" value="@_currentUrl" />
+								<button type="submit" class="menu-item">Logout</button>
+							</form>
+						</div>
+					</details>
+				</Authorized>
+				<NotAuthorized>
+					<a class="text-btn" href="Account/Login">Login</a>
+				</NotAuthorized>
+			</AuthorizeView>
+		</div>
+	</header>
+
+	<main class="content">
+		@Body
+	</main>
 </div>
 
 <div id="blazor-error-ui">
-    An unhandled error has occurred.
-    <a href="" class="reload">Reload</a>
-    <a class="dismiss">🗙</a>
+	An unhandled error has occurred.
+	<a href="" class="reload">Reload</a>
+	<a class="dismiss">🗙</a>
 </div>
+
+@code {
+	private string? _currentUrl;
+
+	private static string Initial(string? name) =>
+		string.IsNullOrEmpty(name) ? "?" : char.ToUpperInvariant(name[0]).ToString();
+
+	protected override void OnInitialized()
+	{
+		_currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+		NavigationManager.LocationChanged += OnLocationChanged;
+	}
+
+	private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+	{
+		_currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
+		StateHasChanged();
+	}
+
+	public void Dispose()
+	{
+		NavigationManager.LocationChanged -= OnLocationChanged;
+	}
+}

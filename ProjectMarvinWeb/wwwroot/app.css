@@ -1,34 +1,7 @@
 html, body {
-	font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-}
-
-html, body {
 	margin: 0;
 	padding: 0;
 	height: 100%;
-}
-
-body {
-	overflow-y: auto;
-	overflow-x: auto;
-}
-
-a, .btn-link {
-	color: #006bb7;
-}
-
-.btn-primary {
-	color: #fff;
-	background-color: #1b6ec2;
-	border-color: #1861ac;
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-	box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-.content {
-	padding-top: 1.1rem;
 }
 
 h1:focus {
@@ -61,223 +34,22 @@ h1:focus {
 	border-color: #929292;
 }
 
-.sidebar {
-	background-image: var(--sidebar-gradient) !important;
-}
-
-
-.bottom-image {
-	position: absolute;
+#blazor-error-ui {
+	background: lightyellow;
+	color: #222;
 	bottom: 0;
+	box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+	display: none;
+	left: 0;
+	padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+	position: fixed;
 	width: 100%;
+	z-index: 1000;
 }
 
-.col-title {
-	padding: 0 !important;
-}
-
-.LogDate {
-	padding: 0 30px 0 0 !important;
-	white-space: nowrap;
-	width: 130px; /* S�tt en fast bredd */
-	overflow: hidden; /* D�lj eventuell �verfl�dig text om den �r f�r l�ng */
-	text-overflow: ellipsis; /* L�gg till ellips (...) om texten �r f�r l�ng f�r att f� plats */
-}
-.LogIPAdress {
-	padding: 0 30px 0 0 !important;
-	white-space: nowrap;
-	width: 130px; /* S�tt en fast bredd */
-	overflow: hidden; /* D�lj eventuell �verfl�dig text om den �r f�r l�ng */
-	text-overflow: ellipsis; /* L�gg till ellips (...) om texten �r f�r l�ng f�r att f� plats */
-}
-	.LogIPAdress a {
-		font-weight: 600 !important;
-		color: var(--text) !important;
-		text-decoration: none !important;
+	#blazor-error-ui .dismiss {
+		cursor: pointer;
+		position: absolute;
+		right: 0.75rem;
+		top: 0.5rem;
 	}
-.LogType {
-	width: 80px;
-	padding: 0 !important;
-}
-
-.LogSender {
-	width: 180px;
-	padding: 0 !important;
-}
-
-.grid-container {
-	width: 100%;
-	max-width: 100%;
-	padding: 0 !important;
-	display: flex;
-	justify-content: center;
-}
-
-.BtnLeft {
-	margin-right: 5px;
-	transition: background-color 0.5s, color 0.5s; 
-}
-
-	.BtnLeft:hover {
-		background-color: black;
-		color: white;
-	}
-
-.closeButton {
-	transition: background-color 0.5s, color 0.5s;
-}
-	.closeButton:hover {
-		background-color: black;
-		color: white;
-	}
-
-.myshadow {
-	-webkit-box-shadow: 10px 10px 28px 0px rgba(0,0,0,0.75);
-	-moz-box-shadow: 10px 10px 28px 0px rgba(0,0,0,0.75);
-	box-shadow: 10px 10px 28px 0px rgba(0,0,0,0.75);
-}
-
-.connection {
-	align-content: end;
-}
-
-/* ── Responsiv layout ─────────────────────────────────────────────────── */
-
-/* Tablet & mobil landskap: minska kolumnbredder lite */
-@media (max-width: 900px) {
-	.LogSender {
-		width: 130px;
-	}
-}
-
-/* Mobil: varje logpost blir ett kort med tre rader (inget sidledsskroll)
-   Rad 1: datum + typ   Rad 2: sender + IP   Rad 3: meddelande */
-@media (max-width: 640.98px) {
-	.table-scroll-wrapper {
-		overflow-x: visible;
-	}
-
-	.table-scroll-wrapper table,
-	.table-scroll-wrapper tbody {
-		display: block;
-		width: 100%;
-		min-width: 0;
-	}
-
-	/* Rubrikraden blir en kompakt rad med sorterings-/filterknappar */
-	.table-scroll-wrapper thead,
-	.table-scroll-wrapper thead tr {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 2px 14px;
-		width: 100%;
-	}
-
-	.table-scroll-wrapper thead th {
-		display: block;
-		width: auto;
-		padding: 2px 0 !important;
-		font-size: 0.8rem;
-	}
-
-	.table-scroll-wrapper tbody tr {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr) auto;
-		grid-template-areas:
-			"date type"
-			"sender ip"
-			"msg msg";
-		gap: 2px 12px;
-		padding: 6px 8px;
-		border-bottom: 1px solid rgba(0,0,0,0.15);
-	}
-
-	.table-scroll-wrapper tbody td {
-		display: block;
-		width: auto;
-		min-width: 0;
-		padding: 0 !important;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		text-align: left !important;
-	}
-
-	.table-scroll-wrapper tbody td.LogDate { grid-area: date; font-size: 0.8rem; opacity: 0.75; }
-	.table-scroll-wrapper tbody td.LogType { grid-area: type; font-size: 0.8rem; font-weight: 600; text-align: right !important; }
-	.table-scroll-wrapper tbody td.LogSender { grid-area: sender; font-weight: 600; white-space: nowrap; }
-	.table-scroll-wrapper tbody td.LogIPAdress { grid-area: ip; font-size: 0.8rem; text-align: right !important; }
-	.table-scroll-wrapper tbody td.LogMessage { grid-area: msg; white-space: normal; overflow-wrap: anywhere; word-break: break-word; }
-
-	/* Tomma celler ska fortfarande ta plats i griden (undviker att rader hoppar) */
-	.table-scroll-wrapper tbody td:empty { display: block; }
-
-	.BtnLeft {
-		font-size: 0.8rem;
-		padding: 0.2rem 0.45rem;
-		margin-right: 3px;
-		margin-bottom: 3px;
-	}
-}
-
-/* Mobillandskap – lite mer luft när skärmen roteras */
-@media (max-height: 500px) and (orientation: landscape) {
-	.LogDate {
-		width: 110px;
-	}
-
-	.LogIPAdress {
-		width: 115px;
-	}
-
-	.LogSender {
-		width: 150px;
-	}
-}
-/* SignalR-status i titelraden */
-.signalr-status {
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
-	margin-left: 10px;
-	font-size: 0.8rem;
-	color: rgba(255,255,255,0.8);
-	vertical-align: middle;
-}
-
-.signalr-dot {
-	width: 11px;
-	height: 11px;
-	border-radius: 50%;
-	background: #2dcd4d;
-	box-shadow: 0 0 6px 1px rgba(45,205,77,0.8);
-}
-
-.signalr-status.disconnected .signalr-dot {
-	background: #e03030;
-	box-shadow: 0 0 6px 1px rgba(224,48,48,0.8);
-	animation: signalr-blink 1s infinite;
-}
-
-@keyframes signalr-blink { 50% { opacity: 0.35; } }
-
-@media (max-width: 640.98px) {
-	.signalr-label { display: none; }
-}
-
-/* Bootstrap lägger space-between på navbar: håll titel + status till vänster, bort från hamburgarmenyn */
-.navbar > .container-fluid {
-	justify-content: flex-start;
-	padding-right: 4.5rem;
-}
-
-/* Desktop: ingen hamburgarmeny, så statusprickens plats är längst till höger i titelraden */
-@media (min-width: 641px) {
-	.navbar > .container-fluid {
-		justify-content: space-between;
-		padding-right: var(--bs-gutter-x, 0.75rem);
-	}
-
-	.signalr-status {
-		margin-left: 0;
-	}
-}
