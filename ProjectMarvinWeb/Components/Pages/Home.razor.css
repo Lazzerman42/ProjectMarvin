@@ -44,27 +44,13 @@
 	height: 100%;
 	display: flex;
 	flex-direction: column;
-	gap: 16px;
-	padding: 24px 28px;
+	padding: 16px 28px;
 	min-width: 0;
 }
 
-.log-title h1 {
-	margin: 0;
-	font-size: 22px;
-	font-weight: 600;
-	letter-spacing: -0.02em;
-}
-
-.subtitle {
-	margin-top: 4px;
-	font-size: 13px;
-	color: var(--text-secondary);
-}
-
-/* Hugs its rows, but never grows past the window - then the rows scroll inside it */
+/* Fills the window height; the rows scroll inside it */
 .log-card {
-	flex: 0 1 auto;
+	flex: 1 1 auto;
 	min-height: 0;
 	display: flex;
 	flex-direction: column;
@@ -431,17 +417,15 @@
 	padding: 12px;
 }
 
-/* -- Footer -------------------------------------------------- */
-.foot {
-	flex: none;
+/* Row count + back-to-top, pushed to the right end of the toolbar */
+.toolbar-end {
 	display: flex;
 	align-items: center;
-	justify-content: space-between;
 	gap: 12px;
-	padding: 10px 20px;
-	border-top: 1px solid var(--border-default);
+	margin-left: auto;
 	font-size: 13px;
 	color: var(--text-secondary);
+	white-space: nowrap;
 }
 
 .top-btn {
@@ -474,13 +458,7 @@
 	}
 
 	.log-page {
-		gap: 0;
 		padding: 0;
-	}
-
-	/* Give the rows the screen: no title, no footer */
-	.log-title {
-		display: none;
 	}
 
 	.log-card {

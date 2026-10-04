@@ -45,7 +45,6 @@ public partial class Home : ComponentBase, IAsyncDisposable
   // Loaded data
   private int _total;      // entries matching the filters
   private int _allTotal;   // all entries in the DB
-  private DateTime? _latest;
   private bool _loaded;
   private bool _loading;
   private bool _recheckSentinel;
@@ -62,10 +61,6 @@ public partial class Home : ComponentBase, IAsyncDisposable
   public bool IsConnected => _hubConnection?.State == HubConnectionState.Connected;
 
   private bool HasFilters => _query.Length > 0 || _level != "All";
-
-  private string Subtitle => _latest is null
-      ? $"{_allTotal} entries"
-      : $"{_allTotal} entries · updated {_latest:HH:mm:ss}";
 
   private string CountLabel => $"{_items.Count} of {_total} items";
 
@@ -304,7 +299,6 @@ public partial class Home : ComponentBase, IAsyncDisposable
       var total = await query.CountAsync(ct);
       var items = await ApplySort(query).Take(take).ToListAsync(ct);
       var allTotal = await db.LogEntries.CountAsync(ct);
-      var latest = await db.LogEntries.MaxAsync(l => l.LogDate, ct);
 
       if (generation != _generation) return; // a newer reload has started
 
@@ -313,7 +307,6 @@ public partial class Home : ComponentBase, IAsyncDisposable
       _items.AddRange(items);
       _total = total;
       _allTotal = allTotal;
-      _latest = latest;
       _appliedQuery = search;
       _loaded = true;
       _loading = false;
