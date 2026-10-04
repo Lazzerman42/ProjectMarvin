@@ -21,11 +21,16 @@
 
 	<section class="log-card">
 		<div class="toolbar">
-			<label class="search">
-				<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" stroke-width="1.6" /><path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg>
-				<input type="search" placeholder="Search sender, message or IP" aria-label="Search sender, message or IP"
-					   value="@_query" @oninput="OnQueryInputAsync" />
-			</label>
+			<div class="search-row">
+				<label class="search">
+					<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><circle cx="7" cy="7" r="5" fill="none" stroke="currentColor" stroke-width="1.6" /><path d="M11 11l3.5 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" /></svg>
+					<input type="search" placeholder="Search sender, message or IP" aria-label="Search sender, message or IP"
+						   value="@_query" @oninput="OnQueryInputAsync" />
+				</label>
+				<button type="button" class="danger-btn trash-btn mob" title="Delete all" aria-label="Delete all" @onclick="ShowConfirmDialog">
+					<svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true"><path d="M2.5 4h11M6.5 4V2.5h3V4M4 4l.7 9.5h6.6L12 4M6.75 6.5v4.5M9.25 6.5v4.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" /></svg>
+				</button>
+			</div>
 			<div class="seg" role="group" aria-label="Level">
 				@foreach (var level in Levels)
 				{
@@ -52,9 +57,14 @@
 					<button type="button" class="link-btn" @onclick="ClearFiltersAsync">Clear</button>
 				}
 			</span>
-			<button type="button" class="latest-mob" role="switch" aria-checked="@_showLatest" title="Show only the latest entry per device" @onclick="ToggleShowLatestAsync">
-				Show latest<span class="switch @(_showLatest ? "on" : null)"><span class="knob"></span></span>
-			</button>
+			<span class="meta-right">
+				<button type="button" class="latest-mob" role="switch" aria-checked="@_showLatest" title="Show only the latest entry per device" @onclick="ToggleShowLatestAsync">
+					Show latest<span class="switch @(_showLatest ? "on" : null)"><span class="knob"></span></span>
+				</button>
+				<button type="button" class="top-btn" title="Back to top" aria-label="Back to top" @onclick="ScrollToTopAsync">
+					<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M8 13V3M3.5 7.5L8 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+				</button>
+			</span>
 		</div>
 
 		<div class="scroll" @ref="_scrollEl">
@@ -90,9 +100,8 @@
 			</div>
 		</div>
 
-		<footer class="foot">
-			<span class="desk">@CountLabel</span>
-			<button type="button" class="danger-btn mob" @onclick="ShowConfirmDialog">Delete all</button>
+		<footer class="foot desk">
+			<span>@CountLabel</span>
 			<button type="button" class="top-btn" title="Back to top" aria-label="Back to top" @onclick="ScrollToTopAsync">
 				<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M8 13V3M3.5 7.5L8 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" /></svg>
 			</button>

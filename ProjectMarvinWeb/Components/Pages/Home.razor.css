@@ -85,6 +85,11 @@
 	border-bottom: 1px solid var(--border-default);
 }
 
+/* Groups search + mobile delete button; invisible to the desktop toolbar layout */
+.search-row {
+	display: contents;
+}
+
 .search {
 	display: flex;
 	align-items: center;
@@ -473,12 +478,9 @@
 		padding: 0;
 	}
 
+	/* Give the rows the screen: no title, no footer */
 	.log-title {
-		padding: 10px 20px 0;
-	}
-
-	.log-title h1 {
-		font-size: 28px;
+		display: none;
 	}
 
 	.log-card {
@@ -494,9 +496,26 @@
 		border: 0;
 	}
 
+	.search-row {
+		display: flex;
+		gap: 8px;
+		margin: 6px 20px 0;
+	}
+
 	.search {
-		margin: 16px 20px 0;
+		flex: 1;
+		min-width: 0;
 		height: 44px;
+		border-radius: 12px;
+	}
+
+	.trash-btn {
+		display: grid;
+		place-items: center;
+		flex: none;
+		width: 44px;
+		height: 44px;
+		padding: 0;
 		border-radius: 12px;
 	}
 
@@ -525,6 +544,12 @@
 		padding: 8px 20px;
 		font-size: 13px;
 		color: var(--text-secondary);
+	}
+
+	.meta-right {
+		display: flex;
+		align-items: center;
+		gap: 12px;
 	}
 
 	.meta .link-btn {
@@ -565,6 +590,7 @@
 	.scroll {
 		border-top: 1px solid var(--border-default);
 		background: var(--bg-surface);
+		padding-bottom: env(safe-area-inset-bottom);
 	}
 
 	.log-row {
@@ -621,20 +647,9 @@
 		line-clamp: 2;
 	}
 
-	.foot {
-		padding: 10px 20px;
-		padding-bottom: calc(10px + env(safe-area-inset-bottom));
-		background: var(--bg-app);
-	}
-
-	.foot .danger-btn {
-		height: 44px;
-		border-radius: 12px;
-	}
-
 	.top-btn {
-		width: 44px;
-		height: 44px;
-		border-radius: 12px;
+		width: 36px;
+		height: 36px;
+		border-radius: 10px;
 	}
 }
