@@ -232,7 +232,7 @@
 .log-row {
 	display: grid;
 	grid-template-columns: 156px 104px 128px 144px minmax(0, 1fr);
-	align-items: center;
+	align-items: baseline; /* keeps the cells on the first line when a message wraps */
 	min-width: 640px;
 	font-size: 14px;
 	border-bottom: 1px solid var(--border-row);
@@ -393,9 +393,8 @@
 
 .c-msg {
 	color: var(--text-message);
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
+	white-space: pre-wrap; /* show the whole message, keeping any line breaks the device sent */
+	overflow-wrap: anywhere;
 }
 
 .empty {
@@ -617,12 +616,6 @@
 	.c-msg {
 		font-size: 14px;
 		line-height: 1.4;
-		white-space: normal;
-		overflow-wrap: anywhere;
-		display: -webkit-box;
-		-webkit-box-orient: vertical;
-		-webkit-line-clamp: 2;
-		line-clamp: 2;
 	}
 
 	.top-btn {
