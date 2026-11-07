@@ -7,65 +7,53 @@
 
 @inject SignInManager<ApplicationUser> SignInManager
 @inject ILogger<Login> Logger
-@inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 
-<PageTitle>Log in</PageTitle>
+<PageTitle>Log in · Project Marvin</PageTitle>
 
-<h1>Log in</h1>
-<div class="row">
-    <div class="col-md-4">
-        <section>
-            <StatusMessage Message="@errorMessage" />
-            <EditForm Model="Input" method="post" OnValidSubmit="LoginUser" FormName="login">
-                <DataAnnotationsValidator />
-                <h2>Use a local account to log in.</h2>
-                <hr />
-                <ValidationSummary class="text-danger" role="alert" />
-                <div class="form-floating mb-3">
-                    <InputText @bind-Value="Input.Email" class="form-control" autocomplete="username" aria-required="true" placeholder="name@example.com" />
-                    <label for="email" class="form-label">Email</label>
-                    <ValidationMessage For="() => Input.Email" class="text-danger" />
-                </div>
-                <div class="form-floating mb-3">
-                    <InputText type="password" @bind-Value="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="password" />
-                    <label for="password" class="form-label">Password</label>
-                    <ValidationMessage For="() => Input.Password" class="text-danger" />
-                </div>
-                <div class="checkbox mb-3">
-                    <label class="form-label">
-                        <InputCheckbox @bind-Value="Input.RememberMe" class="darker-border-checkbox form-check-input" />
-                        Remember me
-                    </label>
-                </div>
-                <div>
-                    <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
-                </div>
-                <div>
-                    <p>
-                        <a href="Account/ForgotPassword">Forgot your password?</a>
-                    </p>
-                    <p>
-                        <a href="@(NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))">Register as a new user</a>
-                    </p>
-                    <p>
-                        <a href="Account/ResendEmailConfirmation">Resend email confirmation</a>
-                    </p>
-                </div>
-            </EditForm>
-        </section>
-    </div>
-    <div class="col-md-6 col-md-offset-2">
-        <section>
-            <h3>Use another service to log in.</h3>
-            <hr />
-            <ExternalLoginPicker />
-        </section>
+<div class="acct-auth">
+    <div class="acct-card">
+        <div class="acct-head">
+            <img src="Images/Marvin1.jpg" class="acct-logo" alt="" />
+            <h1>Log in</h1>
+            <p class="muted">Sign in to see the log from your devices.</p>
+        </div>
+
+        <StatusMessage Message="@errorMessage" />
+
+        <EditForm EditContext="editContext" method="post" OnSubmit="LoginUser" FormName="login" class="stack">
+            <DataAnnotationsValidator />
+            <div class="field">
+                <label for="Input.Email">Email</label>
+                <InputText @bind-Value="Input.Email" id="Input.Email" class="input" type="email" autocomplete="username webauthn" aria-required="true" />
+                <ValidationMessage For="() => Input.Email" />
+            </div>
+            <div class="field">
+                <label for="Input.Password">Password</label>
+                <InputText @bind-Value="Input.Password" id="Input.Password" class="input" type="password" autocomplete="current-password" aria-required="true" />
+                <ValidationMessage For="() => Input.Password" />
+            </div>
+            <label class="check">
+                <InputCheckbox @bind-Value="Input.RememberMe" />
+                Remember me
+            </label>
+            <button type="submit" class="btn btn-primary btn-block">Log in</button>
+
+            <div class="or">or</div>
+
+            <PasskeySubmit Operation="PasskeyOperation.Request" Name="Input.Passkey" EmailName="Input.Email" class="btn btn-secondary btn-block">
+                <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><circle cx="5.5" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.4" /><path d="M8.5 8h6M12.5 8v2.25M14.5 8v1.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" /></svg>
+                Log in with a passkey
+            </PasskeySubmit>
+        </EditForm>
+
+        <ExternalLoginPicker />
     </div>
 </div>
 
 @code {
     private string? errorMessage;
+    private EditContext editContext = default!;
 
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
@@ -80,6 +68,8 @@
     {
         Input ??= new();
 
+        editContext = new EditContext(Input);
+
         if (HttpMethods.IsGet(HttpContext.Request.Method))
         {
             // Clear the existing external cookie to ensure a clean login process
@@ -89,9 +79,30 @@
 
     public async Task LoginUser()
     {
-        // Failed logins count towards account lockout (see the Lockout options in Program.cs),
-        // which stops password guessing against the internet-facing site
-        var result = await SignInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: true);
+        if (!string.IsNullOrEmpty(Input.Passkey?.Error))
+        {
+            errorMessage = $"Error: {Input.Passkey.Error}";
+            return;
+        }
+
+        SignInResult result;
+        if (!string.IsNullOrEmpty(Input.Passkey?.CredentialJson))
+        {
+            // A passkey sign-in doesn't use the email and password fields, so skip their validation
+            result = await SignInManager.PasskeySignInAsync(Input.Passkey.CredentialJson);
+        }
+        else
+        {
+            if (!editContext.Validate())
+            {
+                return;
+            }
+
+            // Failed logins count towards account lockout (see the Lockout options in Program.cs),
+            // which stops password guessing against the internet-facing site
+            result = await SignInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: true);
+        }
+
         if (result.Succeeded)
         {
             Logger.LogInformation("User logged in.");
@@ -129,5 +140,7 @@
 
         [Display(Name = "Remember me?")]
         public bool RememberMe { get; set; }
+
+        public PasskeyInputModel? Passkey { get; set; }
     }
 }

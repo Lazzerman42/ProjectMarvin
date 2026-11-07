@@ -6,26 +6,30 @@
 @inject UserManager<ApplicationUser> UserManager
 @inject IdentityRedirectManager RedirectManager
 
-<PageTitle>Personal Data</PageTitle>
+<PageTitle>Personal data · Project Marvin</PageTitle>
 
 <StatusMessage />
-<h3>Personal Data</h3>
 
-<div class="row">
-    <div class="col-md-6">
-        <p>Your account contains personal data that you have given us. This page allows you to download or delete that data.</p>
-        <p>
-            <strong>Deleting this data will permanently remove your account, and this cannot be recovered.</strong>
-        </p>
-        <form action="Account/Manage/DownloadPersonalData" method="post">
-            <AntiforgeryToken />
-            <button class="btn btn-primary" type="submit">Download</button>
-        </form>
-        <p>
-            <a href="Account/Manage/DeletePersonalData" class="btn btn-danger">Delete</a>
-        </p>
+<section class="panel">
+    <div class="panel-head">
+        <h2>Download your data</h2>
+        <p>Get the personal data stored for your account as a JSON file.</p>
     </div>
-</div>
+    <form action="Account/Manage/DownloadPersonalData" method="post">
+        <AntiforgeryToken />
+        <button class="btn btn-secondary" type="submit">Download</button>
+    </form>
+</section>
+
+<section class="panel danger-zone">
+    <div class="panel-head">
+        <h2>Delete account</h2>
+        <p>Permanently removes your account and everything stored about it. This can't be undone.</p>
+    </div>
+    <div class="actions">
+        <a href="Account/Manage/DeletePersonalData" class="btn btn-ghost-danger">Delete account</a>
+    </div>
+</section>
 
 @code {
     [CascadingParameter]

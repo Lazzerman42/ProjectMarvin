@@ -3,29 +3,36 @@
 
 @inject SignInManager<ApplicationUser> SignInManager
 
-<ul class="nav nav-pills flex-column">
-    <li class="nav-item">
-        <NavLink class="nav-link" href="Account/Manage" Match="NavLinkMatch.All">Profile</NavLink>
-    </li>
-    <li class="nav-item">
-        <NavLink class="nav-link" href="Account/Manage/Email">Email</NavLink>
-    </li>
-    <li class="nav-item">
-        <NavLink class="nav-link" href="Account/Manage/ChangePassword">Password</NavLink>
-    </li>
+@* There's no mail server, so changing the email address (which needs a confirmation mail) isn't offered *@
+<nav class="acct-nav" aria-label="Account settings">
+    <NavLink href="Account/Manage" Match="NavLinkMatch.All">
+        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><circle cx="8" cy="5.5" r="2.75" fill="none" stroke="currentColor" stroke-width="1.4" /><path d="M2.75 13.5c.6-2.4 2.7-4 5.25-4s4.65 1.6 5.25 4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" /></svg>
+        Profile
+    </NavLink>
+    <NavLink href="Account/Manage/ChangePassword">
+        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="1.75" fill="none" stroke="currentColor" stroke-width="1.4" /><path d="M5.25 7V5a2.75 2.75 0 0 1 5.5 0v2" fill="none" stroke="currentColor" stroke-width="1.4" /></svg>
+        Password
+    </NavLink>
+    <NavLink href="Account/Manage/Passkeys">
+        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><circle cx="5.5" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.4" /><path d="M8.5 8h6M12.5 8v2.25M14.5 8v1.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" /></svg>
+        Passkeys
+    </NavLink>
+    <NavLink href="Account/Manage/TwoFactorAuthentication">
+        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M8 1.75 3 3.75v4c0 3.1 2.1 5.4 5 6.5 2.9-1.1 5-3.4 5-6.5v-4z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" /><path d="m5.75 8 1.6 1.6 3-3.1" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" /></svg>
+        Two-factor
+    </NavLink>
     @if (hasExternalLogins)
     {
-        <li class="nav-item">
-            <NavLink class="nav-link" href="Account/Manage/ExternalLogins">External logins</NavLink>
-        </li>
+        <NavLink href="Account/Manage/ExternalLogins">
+            <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M6.75 9.25a2.6 2.6 0 0 0 3.7 0l2.3-2.3a2.6 2.6 0 0 0-3.7-3.7l-.6.6M9.25 6.75a2.6 2.6 0 0 0-3.7 0l-2.3 2.3a2.6 2.6 0 0 0 3.7 3.7l.6-.6" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" /></svg>
+            External logins
+        </NavLink>
     }
-    <li class="nav-item">
-        <NavLink class="nav-link" href="Account/Manage/TwoFactorAuthentication">Two-factor authentication</NavLink>
-    </li>
-    <li class="nav-item">
-        <NavLink class="nav-link" href="Account/Manage/PersonalData">Personal data</NavLink>
-    </li>
-</ul>
+    <NavLink href="Account/Manage/PersonalData">
+        <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M4 1.75h5.25L12.5 5v9.25H4z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" /><path d="M9 1.75V5.25h3.5M6.25 8.5h3.5M6.25 11h3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" /></svg>
+        Personal data
+    </NavLink>
+</nav>
 
 @code {
     private bool hasExternalLogins;

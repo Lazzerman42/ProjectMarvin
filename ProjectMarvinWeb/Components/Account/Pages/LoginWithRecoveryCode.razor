@@ -9,26 +9,28 @@
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<LoginWithRecoveryCode> Logger
 
-<PageTitle>Recovery code verification</PageTitle>
+<PageTitle>Recovery code · Project Marvin</PageTitle>
 
-<h1>Recovery code verification</h1>
-<hr />
-<StatusMessage Message="@message" />
-<p>
-    You have requested to log in with a recovery code. This login will not be remembered until you provide
-    an authenticator app code at log in or disable 2FA and log in again.
-</p>
-<div class="row">
-    <div class="col-md-4">
-        <EditForm Model="Input" FormName="login-with-recovery-code" OnValidSubmit="OnValidSubmitAsync" method="post">
+<div class="acct-auth">
+    <div class="acct-card">
+        <div class="acct-head">
+            <span class="acct-icon" aria-hidden="true">
+                <svg viewBox="0 0 16 16" width="18" height="18"><circle cx="5.5" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.4" /><path d="M8.5 8h6M12.5 8v2.25M14.5 8v1.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" /></svg>
+            </span>
+            <h1>Log in with a recovery code</h1>
+            <p class="muted">Each recovery code works once. Next time you'll be asked for a code from your authenticator app again.</p>
+        </div>
+
+        <StatusMessage Message="@message" />
+
+        <EditForm Model="Input" FormName="login-with-recovery-code" OnValidSubmit="OnValidSubmitAsync" method="post" class="stack">
             <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.RecoveryCode" class="form-control" autocomplete="off" placeholder="RecoveryCode" />
-                <label for="recovery-code" class="form-label">Recovery Code</label>
-                <ValidationMessage For="() => Input.RecoveryCode" class="text-danger" />
+            <div class="field">
+                <label for="Input.RecoveryCode">Recovery code</label>
+                <InputText @bind-Value="Input.RecoveryCode" id="Input.RecoveryCode" class="input mono" autocomplete="off" autofocus />
+                <ValidationMessage For="() => Input.RecoveryCode" />
             </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
+            <button type="submit" class="btn btn-primary btn-block">Log in</button>
         </EditForm>
     </div>
 </div>

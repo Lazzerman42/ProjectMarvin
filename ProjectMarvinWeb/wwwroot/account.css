@@ -1,0 +1,491 @@
+/* Account pages (login, register, manage account, passkeys ...). Everything is scoped under
+   .acct (set by AccountLayout), so nothing here can leak into the log page. Uses the tokens
+   in theme.css, so dark/light mode works without extra rules. */
+
+.acct {
+	--acct-radius: 12px;
+	--control-height: 40px;
+	--focus-ring: 0 0 0 3px color-mix(in oklch, var(--switch-on) 28%, transparent);
+	color: var(--text-primary);
+}
+
+.acct h1, .acct h2, .acct h3 {
+	margin: 0;
+	color: var(--text-primary);
+	letter-spacing: -0.01em;
+}
+
+.acct h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
+.acct h2 { font-size: 16px; font-weight: 600; }
+.acct h3 { font-size: 14px; font-weight: 600; }
+
+.acct p { margin: 0; }
+
+.acct .muted { color: var(--text-secondary); }
+.acct .small { font-size: 13px; }
+.acct .mono { font-family: var(--font-mono); }
+
+.acct a { color: var(--accent-link); text-decoration: none; }
+.acct a:hover { text-decoration: underline; }
+
+.acct .stack { display: flex; flex-direction: column; gap: 16px; }
+.acct .stack-sm { display: flex; flex-direction: column; gap: 8px; }
+
+/* -- Sign-in style pages: one centered card ------------------- */
+.acct-auth {
+	display: flex;
+	justify-content: center;
+	padding: 32px 0 48px;
+}
+
+.acct-card {
+	width: 100%;
+	max-width: 400px;
+	padding: 28px;
+	border: 1px solid var(--border-default);
+	border-radius: var(--acct-radius);
+	background: var(--bg-surface);
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+.acct-card.wide { max-width: 520px; }
+
+.acct-head {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.acct-logo {
+	width: 40px;
+	height: 40px;
+	border-radius: 10px;
+	object-fit: cover;
+	object-position: 50% 15%;
+	margin-bottom: 8px;
+}
+
+.acct-icon {
+	display: grid;
+	place-items: center;
+	width: 40px;
+	height: 40px;
+	border-radius: 10px;
+	margin-bottom: 8px;
+	background: var(--bg-nav-active);
+	color: var(--text-primary);
+}
+
+.acct-icon.danger { background: color-mix(in oklch, var(--danger-base) 16%, transparent); color: var(--danger-text); }
+.acct-icon.success { background: color-mix(in oklch, var(--lvl-success-dot) 16%, transparent); color: var(--lvl-success-text); }
+
+.acct-foot {
+	padding-top: 16px;
+	border-top: 1px solid var(--border-row);
+	font-size: 13px;
+	color: var(--text-secondary);
+	text-align: center;
+}
+
+/* -- Form fields --------------------------------------------- */
+.acct .field {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.acct .field > label, .acct .label {
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--text-button);
+}
+
+.acct .hint { font-size: 12px; color: var(--text-secondary); }
+
+.acct .input {
+	width: 100%;
+	height: var(--control-height);
+	padding: 0 12px;
+	border: 1px solid var(--border-control);
+	border-radius: 8px;
+	background: var(--bg-control);
+	color: var(--text-primary);
+	font: inherit;
+	font-size: 14px;
+	outline: none;
+	transition: border-color 0.12s, box-shadow 0.12s;
+}
+
+.acct .input:focus {
+	border-color: var(--switch-on);
+	box-shadow: var(--focus-ring);
+}
+
+.acct .input[disabled], .acct .input[readonly] {
+	color: var(--text-secondary);
+	background: var(--bg-app);
+}
+
+.acct .input.invalid { border-color: var(--danger-base); }
+.acct .input.invalid:focus { box-shadow: 0 0 0 3px color-mix(in oklch, var(--danger-base) 25%, transparent); }
+
+/* Blazor validation output */
+.acct .validation-message { font-size: 12px; color: var(--danger-text); }
+
+.acct ul.validation-errors {
+	margin: 0;
+	padding: 10px 12px 10px 28px;
+	border-radius: 8px;
+	background: color-mix(in oklch, var(--danger-base) 12%, transparent);
+	color: var(--danger-text);
+	font-size: 13px;
+}
+
+.acct ul.validation-errors:empty { display: none; }
+
+.acct .check {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 13px;
+	color: var(--text-button);
+	cursor: pointer;
+	user-select: none;
+}
+
+.acct .check input {
+	width: 16px;
+	height: 16px;
+	margin: 0;
+	accent-color: var(--switch-on);
+}
+
+/* -- Buttons ------------------------------------------------- */
+.acct .btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	height: var(--control-height);
+	padding: 0 16px;
+	border: 1px solid transparent;
+	border-radius: 8px;
+	font: inherit;
+	font-size: 14px;
+	font-weight: 500;
+	white-space: nowrap;
+	text-decoration: none;
+	cursor: pointer;
+	transition: background 0.12s, border-color 0.12s;
+}
+
+.acct .btn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.acct .btn:hover { text-decoration: none; }
+.acct .btn svg { flex: none; }
+
+.acct .btn-primary { background: var(--switch-on); color: #fff; }
+.acct .btn-primary:hover { background: color-mix(in oklch, var(--switch-on) 85%, black); }
+
+.acct .btn-secondary {
+	background: var(--bg-control);
+	border-color: var(--border-control);
+	color: var(--text-button);
+}
+.acct .btn-secondary:hover { background: var(--bg-nav-hover); }
+
+.acct .btn-danger { background: var(--danger-base); color: #fff; }
+.acct .btn-danger:hover { background: color-mix(in oklch, var(--danger-base) 85%, black); }
+
+.acct .btn-ghost-danger {
+	background: transparent;
+	border-color: color-mix(in oklch, var(--danger-base) 45%, transparent);
+	color: var(--danger-text);
+}
+.acct .btn-ghost-danger:hover { background: color-mix(in oklch, var(--danger-base) 12%, transparent); }
+
+.acct .btn-sm { height: 32px; padding: 0 12px; font-size: 13px; }
+.acct .btn-block { width: 100%; }
+
+.acct .actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+}
+
+.acct form { margin: 0; }
+
+/* "or" separator between password and passkey sign-in */
+.acct .or {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	font-size: 12px;
+	color: var(--text-secondary);
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+}
+
+.acct .or::before, .acct .or::after {
+	content: "";
+	flex: 1;
+	height: 1px;
+	background: var(--border-row);
+}
+
+/* -- Messages ------------------------------------------------ */
+.acct .alert {
+	display: flex;
+	gap: 10px;
+	align-items: flex-start;
+	padding: 10px 12px;
+	border-radius: 8px;
+	font-size: 13px;
+	line-height: 1.45;
+	border: 1px solid transparent;
+}
+
+.acct .alert::before {
+	content: "";
+	flex: none;
+	width: 6px;
+	height: 6px;
+	margin-top: 6px;
+	border-radius: 50%;
+	background: currentColor;
+}
+
+.acct .alert-success {
+	color: var(--lvl-success-text);
+	background: color-mix(in oklch, var(--lvl-success-dot) 12%, transparent);
+	border-color: color-mix(in oklch, var(--lvl-success-dot) 25%, transparent);
+}
+
+.acct .alert-error {
+	color: var(--lvl-error-text);
+	background: color-mix(in oklch, var(--lvl-error-dot) 12%, transparent);
+	border-color: color-mix(in oklch, var(--lvl-error-dot) 25%, transparent);
+}
+
+.acct .alert-warning {
+	color: var(--lvl-warning-text);
+	background: color-mix(in oklch, var(--lvl-warning-dot) 12%, transparent);
+	border-color: color-mix(in oklch, var(--lvl-warning-dot) 25%, transparent);
+}
+
+.acct .alert-info {
+	color: var(--lvl-info-text);
+	background: color-mix(in oklch, var(--lvl-info-dot) 12%, transparent);
+	border-color: color-mix(in oklch, var(--lvl-info-dot) 25%, transparent);
+}
+
+/* -- Manage account: side navigation + panels ---------------- */
+.acct-manage {
+	max-width: 960px;
+	margin: 0 auto;
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+}
+
+.acct-manage-head {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+}
+
+.acct-manage-head .avatar-lg {
+	display: grid;
+	place-items: center;
+	flex: none;
+	width: 44px;
+	height: 44px;
+	border-radius: 50%;
+	background: var(--avatar-bg);
+	font-size: 17px;
+	font-weight: 600;
+}
+
+.acct-manage-body {
+	display: grid;
+	grid-template-columns: 200px minmax(0, 1fr);
+	gap: 24px;
+	align-items: start;
+}
+
+.acct-nav {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.acct-nav a {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	height: 36px;
+	padding: 0 12px;
+	border-radius: 8px;
+	color: var(--text-secondary);
+	font-size: 14px;
+	white-space: nowrap;
+}
+
+.acct-nav a:hover { background: var(--bg-nav-hover); color: var(--text-primary); text-decoration: none; }
+.acct-nav a.active { background: var(--bg-nav-active); color: var(--text-primary); font-weight: 500; }
+.acct-nav svg { flex: none; opacity: 0.8; }
+
+.acct-panels {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	min-width: 0;
+}
+
+.acct .panel {
+	padding: 24px;
+	border: 1px solid var(--border-default);
+	border-radius: var(--acct-radius);
+	background: var(--bg-surface);
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+.acct .panel-head { display: flex; flex-direction: column; gap: 4px; }
+.acct .panel-head p { color: var(--text-secondary); font-size: 13px; line-height: 1.5; }
+
+.acct .panel.danger-zone { border-color: color-mix(in srgb, var(--danger-base) 45%, var(--border-default)); }
+
+.acct .panel form, .acct .panel .form { max-width: 420px; }
+
+/* Key/value rows (e.g. profile) */
+.acct .facts { display: flex; flex-direction: column; }
+.acct .fact {
+	display: flex;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 10px 0;
+	border-bottom: 1px solid var(--border-row);
+	font-size: 14px;
+}
+.acct .fact:last-child { border-bottom: 0; }
+.acct .fact > span:first-child { color: var(--text-secondary); }
+
+/* -- Lists (passkeys) ---------------------------------------- */
+.acct .list {
+	display: flex;
+	flex-direction: column;
+	border: 1px solid var(--border-default);
+	border-radius: 10px;
+	overflow: hidden;
+}
+
+.acct .list-item {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	padding: 12px 14px;
+	border-bottom: 1px solid var(--border-row);
+}
+
+.acct .list-item:last-child { border-bottom: 0; }
+
+.acct .list-icon {
+	display: grid;
+	place-items: center;
+	flex: none;
+	width: 36px;
+	height: 36px;
+	border-radius: 9px;
+	background: var(--bg-nav-active);
+	color: var(--text-primary);
+}
+
+.acct .list-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.acct .list-title { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.acct .list-meta { font-size: 12px; color: var(--text-secondary); display: flex; flex-wrap: wrap; gap: 4px 10px; }
+
+.acct .list-empty {
+	padding: 20px;
+	border: 1px dashed var(--border-control);
+	border-radius: 10px;
+	text-align: center;
+	color: var(--text-secondary);
+	font-size: 13px;
+}
+
+.acct .tag {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 1px 8px;
+	border-radius: 999px;
+	font-size: 11px;
+	font-weight: 500;
+	background: var(--bg-nav-active);
+	color: var(--text-secondary);
+}
+
+.acct .tag.on { color: var(--lvl-success-text); background: color-mix(in oklch, var(--lvl-success-dot) 14%, transparent); }
+.acct .tag.off { color: var(--text-secondary); }
+
+/* Recovery codes and authenticator keys */
+.acct .codes {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 8px 16px;
+	padding: 16px;
+	border-radius: 10px;
+	background: var(--bg-app);
+	border: 1px solid var(--border-default);
+	font-family: var(--font-mono);
+	font-size: 14px;
+}
+
+.acct .key {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 6px;
+	background: var(--bg-app);
+	border: 1px solid var(--border-default);
+	font-family: var(--font-mono);
+	font-size: 13px;
+	word-break: break-all;
+}
+
+.acct ol.steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 16px; line-height: 1.5; }
+
+/* -- Phones --------------------------------------------------- */
+@media (max-width: 640.98px) {
+	.acct { --control-height: 44px; }
+
+	.acct-auth { padding: 8px 0 24px; }
+	.acct-card { padding: 22px 20px; border-radius: 16px; }
+	.acct .btn { border-radius: 12px; font-size: 15px; }
+	.acct .btn-sm { height: 36px; font-size: 13px; border-radius: 10px; }
+	.acct .input { border-radius: 12px; font-size: 16px; } /* 16px stops iOS from zooming in */
+
+	.acct-manage-body { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+
+	/* Navigation becomes a horizontally scrolling row of pills */
+	.acct-nav {
+		flex-direction: row;
+		overflow-x: auto;
+		margin: 0 -20px;
+		padding: 0 20px 2px;
+		scrollbar-width: none;
+	}
+	.acct-nav::-webkit-scrollbar { display: none; }
+	.acct-nav a { height: 34px; border: 1px solid var(--border-default); border-radius: 999px; font-size: 13px; }
+	.acct-nav a.active { border-color: transparent; }
+	.acct-nav svg { display: none; }
+
+	.acct .panel { padding: 18px; border-radius: 16px; }
+	.acct .panel form, .acct .panel .form { max-width: none; }
+	.acct .codes { grid-template-columns: minmax(0, 1fr); }
+	.acct .list-item { flex-wrap: wrap; }
+	.acct .list-item .actions { width: 100%; padding-left: 50px; }
+}

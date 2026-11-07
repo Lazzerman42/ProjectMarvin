@@ -47,7 +47,9 @@ The API saves each entry and broadcasts a "new data" signal on its SignalR hub (
 - **Infinite scroll:** entries load 20 at a time as you scroll.
 - **Dark and light theme**, a mobile layout, and it can be installed as an app (PWA).
 - **Delete all** clears the log after a confirmation.
-- Login is required. New accounts can only be registered by someone who is already logged in, and an account is locked for 15 minutes after 5 failed login attempts.
+- **Log in with a password or a passkey** (fingerprint, face or device PIN). You can add a passkey on each device you use, name them ("iPhone", "Work laptop") and remove one if a device is lost. Passkeys saved in iCloud Keychain, Google Password Manager or a password manager follow you to your other devices.
+- **Account pages** in the same design: profile, password, passkeys, two-factor authentication with an authenticator app, and personal data.
+- Login is required. Only someone who is logged in can add users (**Register** in the menu), and an account is locked for 15 minutes after 5 failed password attempts.
 
 | Light theme | Search |
 |---|---|
@@ -56,6 +58,10 @@ The API saves each entry and broadcasts a "new data" signal on its SignalR hub (
 <img src="docs/images/web-mobile.png" alt="MarvinWeb on a phone" width="300">
 
 *On a phone the list turns into cards.*
+
+| Log in | Passkeys |
+|---|---|
+| ![Log in with a password or a passkey](docs/images/web-login.png) | ![Managing passkeys](docs/images/web-passkeys.png) |
 
 ## The API
 
@@ -133,7 +139,7 @@ The API has no login, so it must only be reachable from your local network:
 - **API key (optional):** add `.RequireApiKey()` to an endpoint to require the `X-API-Key` header to match the `ApiKey` setting. Only `api/protected` uses it now, and when no key is configured every request to it is rejected.
 - **No internal details in errors:** failures return a standard error response without exception messages.
 
-MarvinWeb requires login, locks accounts after repeated failed logins, only lets logged-in users register new accounts, blocks redirects to other sites after login, and sends security headers (`X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`). Use HTTPS if you expose it to the internet.
+MarvinWeb requires login, supports passkeys (which can't be phished or guessed), locks accounts after repeated failed password logins, only lets logged-in users add new accounts, blocks redirects to other sites after login, and sends security headers (`X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`). Use HTTPS if you expose it to the internet.
 
 ## Getting started
 
@@ -151,6 +157,10 @@ dotnet run --project ProjectMarvinWeb   # https://localhost:7032
 ```
 
 Log in to MarvinWeb as **Marvin@log.com / Marvin42!**. Change the password, or create a new user and delete this one, before you expose MarvinWeb to the internet.
+
+MarvinWeb updates its login database (`SQLiteLogin.db`) automatically at startup when a new version needs it, for example the passkey table. Back up the file before you deploy a new version.
+
+Passkeys belong to the site's domain: a passkey created on `https://marvin.example.com` only works there, and one created on `https://localhost:7032` only works locally. They need HTTPS (localhost is fine for development).
 
 ### Configuration
 

@@ -12,23 +12,26 @@
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 
-<PageTitle>Resend email confirmation</PageTitle>
+<PageTitle>Resend confirmation · Project Marvin</PageTitle>
 
-<h1>Resend email confirmation</h1>
-<h2>Enter your email.</h2>
-<hr />
-<StatusMessage Message="@message" />
-<div class="row">
-    <div class="col-md-4">
-        <EditForm Model="Input" FormName="resend-email-confirmation" OnValidSubmit="OnValidSubmitAsync" method="post">
+<div class="acct-auth">
+    <div class="acct-card">
+        <div class="acct-head">
+            <span class="acct-icon" aria-hidden="true">
+                <svg viewBox="0 0 16 16" width="18" height="18"><rect x="2" y="3.5" width="12" height="9" rx="1.75" fill="none" stroke="currentColor" stroke-width="1.4" /><path d="m2.5 4.5 5.5 4.25 5.5-4.25" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" /></svg>
+            </span>
+            <h1>Resend email confirmation</h1>
+            <p class="muted">Enter your email to get a new confirmation link.</p>
+        </div>
+        <StatusMessage Message="@message" />
+        <EditForm Model="Input" FormName="resend-email-confirmation" OnValidSubmit="OnValidSubmitAsync" method="post" class="stack">
             <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.Email" class="form-control" aria-required="true" placeholder="name@example.com" />
-                <label for="email" class="form-label">Email</label>
-                <ValidationMessage For="() => Input.Email" class="text-danger" />
+            <div class="field">
+                <label for="Input.Email">Email</label>
+                <InputText @bind-Value="Input.Email" id="Input.Email" class="input" type="email" autocomplete="email" aria-required="true" />
+                <ValidationMessage For="() => Input.Email" />
             </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Resend</button>
+            <button type="submit" class="btn btn-primary btn-block">Resend</button>
         </EditForm>
     </div>
 </div>

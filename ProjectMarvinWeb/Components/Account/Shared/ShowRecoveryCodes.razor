@@ -1,23 +1,24 @@
-﻿<StatusMessage Message="@StatusMessage" />
-<h3>Recovery codes</h3>
-<div class="alert alert-warning" role="alert">
-    <p>
-        <strong>Put these codes in a safe place.</strong>
-    </p>
-    <p>
-        If you lose your device and don't have the recovery codes you will lose access to your account.
-    </p>
-</div>
-<div class="row">
-    <div class="col-md-12">
+﻿<section class="panel">
+    <div class="panel-head">
+        <h2>Recovery codes</h2>
+        <p>Each code logs you in once if you lose the device with your authenticator app.</p>
+    </div>
+
+    <StatusMessage Message="@StatusMessage" />
+
+    <div class="alert alert-warning" role="alert"><span>Put these codes somewhere safe now. They won't be shown again.</span></div>
+
+    <div class="codes">
         @foreach (var recoveryCode in RecoveryCodes)
         {
-            <div>
-                <code class="recovery-code">@recoveryCode</code>
-            </div>
+            <span>@recoveryCode</span>
         }
     </div>
-</div>
+
+    <div class="actions">
+        <a href="Account/Manage/TwoFactorAuthentication" class="btn btn-secondary">Done</a>
+    </div>
+</section>
 
 @code {
     [Parameter]
