@@ -4,31 +4,29 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Redirects during static rendering (the Identity pages) no longer throw a NavigationException -->
+    <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
     <UserSecretsId>aspnet-ProjectMarvin-857122b1-03dc-4cd4-abfa-98123d191a79</UserSecretsId>
   </PropertyGroup>
-	  
-	<ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="10.0.12" />
-    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.12" />
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.12" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.12" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.12">
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="10.0.14" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.14" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.14" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.14" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.14">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.OpenApi" Version="2.12.2" />
-    <PackageReference Include="Roslynator.Analyzers" Version="5.0.0">
+    <PackageReference Include="Roslynator.Analyzers" Version="5.0.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Scalar.AspNetCore" Version="2.17.13" />
     <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="3.53.3" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Databases\" />
-    <Folder Include="Data\Migrations\" />
   </ItemGroup>
 
   <ItemGroup>
@@ -39,14 +37,6 @@
     <None Update="Databases\SQLiteLogin.db">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <EditorConfigFiles Remove="C:\Users\lsiden\source\repos\ProjectMarvin\ProjectMarvinWeb\.editorconfig" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="C:\Users\lsiden\source\repos\ProjectMarvin\ProjectMarvinWeb\.editorconfig" />
   </ItemGroup>
 
 </Project>

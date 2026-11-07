@@ -1,34 +1,16 @@
-using Marvin.Common;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using ProjectMarvin.Components;
 using ProjectMarvin.Components.Account;
 using ProjectMarvin.Data;
-using ProjectMarvin.Hubs;
-using ProjectMarvin.Logic;
-using Scalar.AspNetCore;
-using System.Globalization;
-using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddSignalR();
-
-builder.Services.AddOpenApi();
-
-// Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// Our Services
-//builder.Services.AddSingleton<LogEntries>(); // not used now, we use SQLite
-// IHubContext<LogHub> registreras automatiskt av AddSignalR()
-
-
 builder.Services.AddCascadingAuthenticationState();
-builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 
@@ -39,91 +21,82 @@ builder.Services.AddAuthentication(options =>
 })
     .AddIdentityCookies();
 
-// DBContextFactory for SQLite Identity database
-var IdentityConnection = builder.Configuration.GetConnectionString("IdentityConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-builder.Services.AddDbContextFactory<ApplicationDbContextIdentity>(options =>
-    options.UseSqlite(IdentityConnection));
+// DbContextFactory for the SQLite Identity database
+var identityConnection = builder.Configuration.GetConnectionString("IdentityConnection")
+    ?? throw new InvalidOperationException("Connection string 'IdentityConnection' not found.");
+builder.Services.AddDbContextFactory<ApplicationDbContextIdentity>(options => options.UseSqlite(identityConnection));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-// Since we are using DbContextFactory here, we make this "helper" for the Identity-components to get a DbContext from The Factory
-builder.Services.AddScoped<ApplicationDbContextIdentity>(p => p.GetRequiredService<IDbContextFactory<ApplicationDbContextIdentity>>().CreateDbContext());
+// The Identity components need a scoped DbContext, so hand them one from the factory
+builder.Services.AddScoped(p => p.GetRequiredService<IDbContextFactory<ApplicationDbContextIdentity>>().CreateDbContext());
 
-// DBContextFactory for SQLite LogData database
-var LogDataConnection = builder.Configuration.GetConnectionString("LogDataConnection");
+// DbContextFactory for the SQLite log database (shared with the API, which writes to it)
+var logDataConnection = builder.Configuration.GetConnectionString("LogDataConnection")
+    ?? throw new InvalidOperationException("Connection string 'LogDataConnection' not found.");
 builder.Services.AddDbContextFactory<ApplicationDbContextLogData>(options =>
-    options.UseSqlite(LogDataConnection)
-    .EnableSensitiveDataLogging(false)
-    .EnableServiceProviderCaching()
-    .EnableDetailedErrors(false),
+    options.UseSqlite(logDataConnection),
     ServiceLifetime.Scoped);
 
-// Add Identitycore for our ApplicationUser, no mail confirmation 
-builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = false)
+// No mail server, so accounts aren't email-confirmed. Lock an account for a while after
+// repeated failed logins, since the site is reachable from the internet.
+builder.Services.AddIdentityCore<ApplicationUser>(options =>
+{
+  options.SignIn.RequireConfirmedAccount = false;
+  options.Lockout.AllowedForNewUsers = true;
+  options.Lockout.MaxFailedAccessAttempts = 5;
+  options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+})
     .AddEntityFrameworkStores<ApplicationDbContextIdentity>()
     .AddSignInManager()
     .AddDefaultTokenProviders();
 
-// No email-server so Accounts won't be Email verified
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
 var app = builder.Build();
-app.Use(async (context, next) =>
-{
-  var path = context.Request.Path.Value?.ToLower() ?? "";
 
-  // L�gg till callback som k�rs PRECIS innan response b�rjar
+// Long-lived caching for static files. Stylesheets and scripts are referenced through @Assets[...],
+// whose URLs change with the content, so they can be cached as immutable.
+app.Use((context, next) =>
+{
   context.Response.OnStarting(() =>
   {
-    if (context.Response.StatusCode == 200 && !string.IsNullOrEmpty(Path.GetExtension(path)))
+    var extension = Path.GetExtension(context.Request.Path.Value);
+    if (context.Response.StatusCode == StatusCodes.Status200OK && !string.IsNullOrEmpty(extension))
     {
-      context.Response.Headers.Append("Alt-Svc", "h2=\":443\"; ma=86400, h3=\":443\"; ma=86400");
+      var headers = context.Response.Headers;
+      headers.AltSvc = "h2=\":443\"; ma=86400, h3=\":443\"; ma=86400";
 
-      var extension = Path.GetExtension(path);
-
-      switch (extension)
+      switch (extension.ToLowerInvariant())
       {
-        case ".css":
-        case ".js":
-        case ".woff":
-        case ".woff2":
-        case ".ttf":
-          context.Response.Headers.Append("Expires", DateTime.UtcNow.AddYears(1).ToString("R"));
-          context.Response.Headers.Append("Cache-Control", "public, max-age=31536000, immutable");
+        case ".css" or ".js" or ".woff" or ".woff2" or ".ttf":
+          headers.Expires = DateTime.UtcNow.AddYears(1).ToString("R");
+          headers.CacheControl = "public, max-age=31536000, immutable";
           break;
 
-        case ".png":
-        case ".jpg":
-        case ".jpeg":
-        case ".gif":
-        case ".svg":
-        case ".ico":
-        case ".webp":
-          context.Response.Headers.Append("Expires", DateTime.UtcNow.AddDays(30).ToString("R"));
-          context.Response.Headers.Append("Cache-Control", "public, max-age=2592000");
+        case ".png" or ".jpg" or ".jpeg" or ".gif" or ".svg" or ".ico" or ".webp":
+          headers.Expires = DateTime.UtcNow.AddDays(30).ToString("R");
+          headers.CacheControl = "public, max-age=2592000";
           break;
       }
     }
     return Task.CompletedTask;
   });
 
-  await next();
-
+  return next(context);
 });
 
-app.Use(async (context, next) =>
+app.Use((context, next) =>
 {
-  context.Response.Headers.Append("X-Frame-Options", "DENY");
-  context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
-  context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
-  await next();
+  var headers = context.Response.Headers;
+  headers.XFrameOptions = "DENY";
+  headers.XContentTypeOptions = "nosniff";
+  headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+  headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=()";
+  return next(context);
 });
 
-app.UseMiddleware<IPFilterMiddleware>();
-
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-
-
+  app.UseMigrationsEndPoint();
 }
 else
 {
@@ -134,134 +107,13 @@ else
 
 app.UseHttpsRedirection();
 
-var staticFileOptions = new StaticFileOptions
-{
-  OnPrepareResponse = ctx =>
-  {
-    var path = ctx.Context.Request.Path.Value?.ToLower() ?? "";
-    var headers = ctx.Context.Response.Headers;
-
-    if (path.EndsWith(".css") || path.EndsWith(".js") ||
-        path.EndsWith(".woff") || path.EndsWith(".woff2"))
-    {
-      headers.Expires = DateTime.UtcNow.AddYears(1).ToString("R");
-      headers.CacheControl = "public, max-age=31536000, immutable";
-    }
-    else if (path.EndsWith(".png") || path.EndsWith(".jpg") ||
-             path.EndsWith(".svg") || path.EndsWith(".ico"))
-    {
-      headers.Expires = DateTime.UtcNow.AddDays(30).ToString("R");
-      headers.CacheControl = "public, max-age=2592000";
-    }
-  }
-};
-
 app.MapStaticAssets();
 app.UseAntiforgery();
-
-// Our SignalR hub - signals frontend that new data has arrived
-app.MapHub<LogHub>("/loghub").RequireAuthorization();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-// Add additional endpoints required by the Identity /Account Razor components.
+// Additional endpoints required by the Identity /Account Razor components
 app.MapAdditionalIdentityEndpoints();
 
-//////////////////////////////////////////////////////////////////////////////////
-/// Here we will map our Minimal API Endpoints
-/// 
-/*
-app.MapGet("/api/protected", [RequireApiKey] () =>
-{
-  return "This endpoint is protected by API Key";
-})
-.RequireApiKey()
-.WithName("GetProtectedData");
-
-// GET LOG - receives a new Log Entry by parsing the GET URL. I know a GET method isn't "right",
-// but it is a good fit for many small-footprint IoT boards with limited power
-app.MapGet("api/Log/{message}", async (string message, HttpContext context, IHubContext<LogHub> hubContext) =>
-{
-  await HandleLogRequestAsync(context, message, app.Services, hubContext);
-
-  return DateTime.Now + " : " + " : " + message;
-})
-.WithName("Log");
-
-
-// This is an Exmaple of a slightly modified simple GET, where you offer a special Endpoint for
-// a special Application - so you can set default values for just that APP. Here we set the Sender attribute
-app.MapGet("api/Log/ExampleApp/{message}", async (string message, HttpContext context, IHubContext<LogHub> hubContext) =>
-{
-  // Here the last arguemnt(optional) is the Sender - we set it to "Magical App", this mean you can
-  // make simple bash/shell/powershell etc with special endpoints with prearranged attributes if you like
-  await HandleLogRequestAsync(context, message, app.Services, hubContext, "Sent by The magical App");
-
-  return DateTime.Now + " : " + " : " + message;
-})
-.WithName("LogExampleApp");
-
-// Receive new LogEntry via Form POST
-app.MapPost("api/Log/", async (HttpRequest request, HttpContext context, IHubContext<LogHub> hubContext) =>
-{
-  var body = new StreamReader(request.Body);
-  string postData = await body.ReadToEndAsync();
-
-  await HandleLogRequestAsync(context, postData, app.Services, hubContext);
-  return await Task.FromResult<string>(postData);
-});
-
-// ECHO function - you can use this to check that WiFi is working as expected(ie send something known,
-// and compare the returned result. 
-app.MapGet("api/Echo/{message}", (string message, HttpContext context) =>
-{
-  // var callerIpAddress = context.Connection.RemoteIpAddress?.ToString();
-  return message;
-})
-.WithName("Echo");
-
-// Get LocalTime - many small and simple devices don't have any Real time clock, or maybe they do have a RTC chip
-// but no way to set the time at Boot - so I use this API Call to set the date/time on my RPI Pico W:s
-app.MapGet("api/GetLocalTime", string (HttpContext context) =>
-{
-  // Local time for Sweden - I use this for my RPi Pico W:s
-  // Change CultureInfo to fit your needs
-  var currentTime = DateTimeOffset.Now;
-  var formattedTime = currentTime.ToString("O", new CultureInfo("sv-SE"));
-
-  return formattedTime;
-});
-// Common logic for handling the Log-requests
-
-static async Task SaveLogEntryAsync(IServiceProvider services, LogEntry logEntry)
-{
-  using var scope = services.CreateScope();
-  var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContextLogData>();
-  await db.LogEntries.AddAsync(logEntry);
-  await db.SaveChangesAsync();
-
-}
-// Main method for handling saving of LogEntries
-static async Task HandleLogRequestAsync(HttpContext context, string postData, IServiceProvider services, IHubContext<LogHub> hubContext, string sender = "")
-{
-  var callerIpAddress = context.Connection.RemoteIpAddress?.ToString();
-
-  LogEntry logEntry = LogEntry.Load(postData);
-  logEntry.IPAdress = callerIpAddress;
-
-  if (logEntry.LogDate == null)
-    logEntry.LogDate = DateTime.Now;
-  if (sender != "")
-    logEntry.Sender = sender;
-
-  if (string.IsNullOrEmpty(logEntry.LogType))
-    logEntry.LogType = "Info";
-
-  await SaveLogEntryAsync(services, logEntry);
-
-  await hubContext.Clients.All.SendAsync("ReceiveLogUpdate");
-}
-//////////////////////////////////////////////////////////////////////////////////
-*/
-app.Run();
+await app.RunAsync();

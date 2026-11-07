@@ -222,7 +222,7 @@ public partial class Home : ComponentBase, IAsyncDisposable
   {
     if (LogDBFactory is null) return;
     await using var db = await LogDBFactory.CreateDbContextAsync();
-    await db.Database.ExecuteSqlRawAsync("DELETE FROM LogEntries");
+    await db.LogEntries.ExecuteDeleteAsync();
     await ReloadAsync(keepLoaded: false);
   }
 

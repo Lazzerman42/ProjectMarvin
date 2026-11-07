@@ -1,6 +1,10 @@
 ﻿@page "/Account/Manage/PersonalData"
 
-@inject IdentityUserAccessor UserAccessor
+@using Microsoft.AspNetCore.Identity
+@using ProjectMarvin.Data
+
+@inject UserManager<ApplicationUser> UserManager
+@inject IdentityRedirectManager RedirectManager
 
 <PageTitle>Personal Data</PageTitle>
 
@@ -29,6 +33,9 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _ = await UserAccessor.GetRequiredUserAsync(HttpContext);
+        if (await UserManager.GetUserAsync(HttpContext.User) is null)
+        {
+            RedirectManager.RedirectToInvalidUser(UserManager, HttpContext);
+        }
     }
 }
