@@ -362,3 +362,8 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /README.md
+
+# SQLite temporary files (write-ahead log and shared memory) - recreated while the apps run
+*.db-shm
+*.db-wal
+*.db-journal
