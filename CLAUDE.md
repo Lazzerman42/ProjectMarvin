@@ -25,7 +25,7 @@ dotnet run --project ProjectMarvinWeb   # https://localhost:7032 ("https" profil
 dotnet ef database update --context <ApplicationDbContextIdentity|ApplicationDbContextLogData>   # run from the project dir
 ```
 
-Client examples for exercising the API: `ProjectMarvinAPI/Example Code/` (`API Test.http`, CURL, MicroPython). Scalar API docs are served by the API project in Development.
+Client examples for exercising the API: `ProjectMarvinAPI/Example Code/` (`API Test.http`, CURL, MicroPython, and `Test-MarvinApi.ps1`, which checks a deployed API end to end and leaves two "Marvin API verified" entries in the log). Scalar API docs are served by the API project in Development.
 
 ## Architecture
 
