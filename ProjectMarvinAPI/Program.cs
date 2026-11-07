@@ -1,243 +1,75 @@
-using Marvin.Common;
-using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using ProjectMarvinAPI.Data;
+using ProjectMarvinAPI.Endpoints;
 using ProjectMarvinAPI.Hubs;
-using ProjectMarvinAPI.Middleware;
+using ProjectMarvinAPI.Security;
+using ProjectMarvinAPI.Services;
 using Scalar.AspNetCore;
-using System.Globalization;
-using System.Net;
-using System.Net.Sockets;
-using System.Web;
+
+// Devices only send small log entries, so keep request bodies small
+const long MaxRequestBodySize = 64 * 1024;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddOpenApi();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSignalR(); // IHubContext<LogHub> registreras automatiskt av AddSignalR()
+builder.Services.AddProblemDetails();
+builder.Services.AddSignalR();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<LogIngestionService>();
+builder.Services.Configure<IpFilterOptions>(builder.Configuration.GetSection(IpFilterOptions.SectionName));
 
-// DBContextFactory for SQLite LogData database
-var LogDataConnection = builder.Configuration.GetConnectionString("LogDataConnection");
-builder.Services.AddDbContextFactory<ApplicationDbContextLogData>(options =>
-    options.UseSqlite(LogDataConnection));
+var logDataConnection = builder.Configuration.GetConnectionString("LogDataConnection")
+    ?? throw new InvalidOperationException("Connection string 'LogDataConnection' not found.");
+builder.Services.AddDbContextFactory<ApplicationDbContextLogData>(options => options.UseSqlite(logDataConnection));
 
-// Start API on this machines IP-Adress on port 4200
-builder.WebHost.ConfigureKestrel(serverOptions => serverOptions.Listen(IPAddress.Parse(GetLocalIPAddress()), 4200));
+builder.Services.Configure<KestrelServerOptions>(options =>
+{
+  options.Limits.MaxRequestBodySize = MaxRequestBodySize;
+  options.AddServerHeader = false;
+});
+builder.Services.Configure<IISServerOptions>(options => options.MaxRequestBodySize = MaxRequestBodySize);
+
+// Listen on this machine's LAN address so devices can reach the API, unless endpoints are configured
+// explicitly (the "Kestrel:Endpoints" section). The port can be changed with "Marvin:Port".
+if (!builder.Configuration.GetSection("Kestrel:Endpoints").Exists())
+{
+  var port = builder.Configuration.GetValue("Marvin:Port", 4200);
+  builder.WebHost.ConfigureKestrel(options => options.Listen(LocalNetwork.GetLocalIPv4Address(), port));
+}
 
 var app = builder.Build();
 
-// Sätt WAL-mode en gång vid startup
-using (var scope = app.Services.CreateScope())
+// WAL lets the Web app read the shared database while the API writes to it
+await using (var db = await app.Services.GetRequiredService<IDbContextFactory<ApplicationDbContextLogData>>().CreateDbContextAsync())
 {
-  var dbFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<ApplicationDbContextLogData>>();
-  using var db = await dbFactory.CreateDbContextAsync();
   await db.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;");
   await db.Database.ExecuteSqlRawAsync("PRAGMA cache_size=5000;");
 }
 
-app.MapOpenApi();
-// Our SignalR hub - signals frontend that new data has arrived
-app.MapHub<LogHub>("/loghub");
+app.UseExceptionHandler(new ExceptionHandlerOptions
+{
+  // e.g. 413 when a body is larger than MaxRequestBodySize, instead of 500
+  StatusCodeSelector = ex => ex is Microsoft.AspNetCore.Http.BadHttpRequestException badRequest ? badRequest.StatusCode : StatusCodes.Status500InternalServerError
+});
+app.UseMiddleware<IpFilterMiddleware>();
+app.Use((context, next) =>
+{
+  context.Response.Headers.XContentTypeOptions = "nosniff";
+  return next(context);
+});
 
+app.MapOpenApi();
 if (app.Environment.IsDevelopment())
 {
   app.MapScalarApiReference();
 }
 
-static string GetLocalIPAddress()
-{
-  var host = Dns.GetHostEntry(Dns.GetHostName());
-  foreach (var ip in host.AddressList)
-  {
-    if (ip.AddressFamily == AddressFamily.InterNetwork)
-    {
-      return ip.ToString();
-    }
-  }
-  throw new System.Net.Sockets.SocketException(1, "No network adapters with an IPv4 address in the system!");
-}
+// Tells the Web UI that new log entries have arrived
+app.MapHub<LogHub>("/loghub");
+app.MapLogEndpoints();
 
-/////////////////////////////////////////////////////////////////////////////////////////////////////////
-/// Here we will map our Minimal API Endpoints
-app.MapGet("/api/protected", [RequireApiKey] () => "This endpoint is protected by API Key")
-.RequireApiKey()
-.WithName("GetProtectedData");
+await app.RunAsync();
 
-// GET LOG - receives a new Log Entry by parsing the GET URL. I know a GET method isn't "right",
-// but it is a good fit for many small-footprint IoT boards with limited power
-app.MapGet("api/Log/{message}", async (string message, HttpContext context, IHubContext<LogHub> hubContext) =>
-{
-  try
-  {
-    await HandleLogRequestAsync(context, HttpUtility.UrlDecode(message), app.Services, hubContext);
-
-    return Results.Ok($"{DateTime.Now} : {message}");
-  }
-  catch (Exception ex)
-  {
-    return Results.Problem(ex.Message);
-  }
-})
-.WithName("Log");
-
-// Get LogCount - mostly used to chech that the Databasefile is found :-)
-app.MapGet("api/LogCount", async (HttpContext context) =>
-{
-  try
-  {
-    using var scope = context.RequestServices.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContextLogData>();
-    int count = await db.LogEntries.CountAsync();
-    return Results.Ok($"Database LogEntries Count: {count}");
-  }
-  catch (Exception ex)
-  {
-    return Results.Problem(
-        detail: $"An error occurred while retrieving the log count. Error {ex.Message}",
-        statusCode: 500
-    );
-  }
-})
-.WithName("LogCount");
-
-// This is an Exmaple of a slightly modified simple GET, where you offer a special Endpoint for
-// a special Application - so you can set default values for just that APP. Here we set the Sender attribute
-app.MapGet("api/Log/ExampleApp/{message}", async (string message, HttpContext context, IHubContext<LogHub> hubContext) =>
-{
-  // Here the last arguemnt(optional) is the Sender - we set it to "Magical App", this mean you can
-  // make simple bash/shell/powershell etc with special endpoints with prearranged attributes if you like
-  await HandleLogRequestAsync(context, HttpUtility.UrlDecode(message), app.Services, hubContext, "Magical App");
-
-  return $"{DateTime.Now} : {message}";
-})
-.WithName("LogExampleApp");
-
-// Receive new LogEntry via Form POST
-app.MapPost("api/Log/", async (HttpRequest request, HttpContext context, IHubContext<LogHub> hubContext) =>
-{
-  try
-  {
-    var body = new StreamReader(request.Body);
-    string postData = await body.ReadToEndAsync();
-
-    await HandleLogRequestAsync(context, postData, app.Services, hubContext);
-    return Results.Ok(postData);
-  }
-  catch (Exception ex)
-  {
-    return Results.Problem(detail: ex.Message, statusCode: 500);
-  }
-});
-
-// Receive new LogEntry via JSON POST - this is the preferred method for most applications
-// Modern version ment for non IoT devices
-app.MapPost("api/LogEx/", async (LogEntry logEntry, HttpContext context, IHubContext<LogHub> hubContext) =>
-{
-  try
-  {
-    await HandleLogRequestAsyncEx(context, logEntry, app.Services, hubContext);
-    return Results.Ok(logEntry);
-  }
-  catch (Exception ex)
-  {
-    return Results.Problem(detail: ex.Message, statusCode: 500);
-  }
-});
-
-// ECHO function - you can use this to check that WiFi is working as expected(ie send something known,
-// and compare the returned result. 
-app.MapGet("api/Echo/{message}", (string message) => message)
-.WithName("Echo");
-
-// Get LocalTime - many small and simple devices don't have any Real time clock, or maybe they do have a RTC chip
-// but no way to set the time at Boot - so I use this API Call to set the date/time on my RPI Pico W:s
-app.MapGet("api/GetLocalTime", string () =>
-{
-  // Local time for Sweden - I use this for my RPi Pico W:s
-  // Change CultureInfo to fit your needs
-  try
-  {
-    var currentTime = DateTimeOffset.Now;
-    var formattedTime = currentTime.ToString("O", new CultureInfo("sv-SE"));
-
-    return formattedTime;
-  }
-  catch
-  {
-    return "";
-  }
-});
-// Common logic for handling the Log-requests
-
-static async Task SaveLogEntryAsync(IServiceProvider services, LogEntry logEntry)
-{
-  try
-  {
-    using var scope = services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContextLogData>();
-    await db.LogEntries.AddAsync(logEntry);
-    await db.SaveChangesAsync();
-  }
-  catch (Exception ex) // Don't expect the simple IoT devices to handle any errors
-  {
-    Console.WriteLine($"SaveLogEntryAsync Error: {ex.Message} ");
-  }
-}
-// Main method for handling saving of LogEntries
-static async Task HandleLogRequestAsync(HttpContext context, string postData, IServiceProvider services, IHubContext<LogHub> hubContext, string sender = "")
-{
-  try
-  {
-    var callerIpAddress = context.Connection.RemoteIpAddress?.ToString();
-
-    LogEntry logEntry = LogEntry.Load(postData);
-    logEntry.IPAdress = callerIpAddress;
-
-    if (logEntry.LogDate == null)
-      logEntry.LogDate = DateTime.Now;
-    if (sender != "")
-      logEntry.Sender = sender;
-
-    if (string.IsNullOrEmpty(logEntry.LogType))
-      logEntry.LogType = "Info";
-
-    await SaveLogEntryAsync(services, logEntry);
-
-    await hubContext.Clients.All.SendAsync("ReceiveLogUpdate");
-  }
-  catch (Exception ex) // Don't expect the simple IoT devices to handle any errors
-  {
-    Console.WriteLine($"HandleLogRequestAsync Error: {ex.Message} ");
-  }
-}
-// Main method for handling saving of LogEntries for modern devices
-static async Task HandleLogRequestAsyncEx(HttpContext context, LogEntry logEntry, IServiceProvider services, IHubContext<LogHub> hubContext, string sender = "")
-{
-  try
-  {
-    var callerIpAddress = context.Connection.RemoteIpAddress?.ToString();
-
-    logEntry.IPAdress = callerIpAddress;
-
-    if (logEntry.LogDate == null)
-      logEntry.LogDate = DateTime.Now;
-    if (sender != "")
-      logEntry.Sender = sender;
-
-    if (string.IsNullOrEmpty(logEntry.LogType))
-      logEntry.LogType = "Info";
-
-    await SaveLogEntryAsync(services, logEntry);
-
-    await hubContext.Clients.All.SendAsync("ReceiveLogUpdate");
-  }
-  catch (Exception ex) // Don't expect the simple IoT devices to handle any errors
-  {
-    Console.WriteLine($"HandleLogRequestAsync Error: {ex.Message} ");
-  }
-}
-/////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-#pragma warning disable S6966 // Awaitable method should be used
-app.Run();
-#pragma warning restore S6966 // Awaitable method should be used
+/// <summary>Entry point; public so the integration tests can host the API.</summary>
+public partial class Program;
