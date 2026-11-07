@@ -41,6 +41,8 @@ builder.Services.AddDbContextFactory<ApplicationDbContextLogData>(options =>
 builder.Services.AddIdentityCore<ApplicationUser>(options =>
 {
   options.SignIn.RequireConfirmedAccount = false;
+  // Version 3 adds the AspNetUserPasskeys table, so users can sign in with passkeys
+  options.Stores.SchemaVersion = IdentitySchemaVersions.Version3;
   options.Lockout.AllowedForNewUsers = true;
   options.Lockout.MaxFailedAccessAttempts = 5;
   options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
@@ -52,6 +54,13 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
 var app = builder.Build();
+
+// Bring the login database up to date (e.g. the passkey table) when a new version is deployed.
+// Only the Identity database: the log database is shared with the API and is left alone.
+await using (var identityDb = await app.Services.GetRequiredService<IDbContextFactory<ApplicationDbContextIdentity>>().CreateDbContextAsync())
+{
+  await identityDb.Database.MigrateAsync();
+}
 
 // Long-lived caching for static files. Stylesheets and scripts are referenced through @Assets[...],
 // whose URLs change with the content, so they can be cached as immutable.
