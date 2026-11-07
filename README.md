@@ -27,23 +27,26 @@ The solution is divided into two projects, one serversideproject Webproject, wit
 3. ECHO (GET) - Send in something and get it Echoed back. I use this to check that WiFi is healty when using my Pico W:s
 4. GetLocalTime (GET) - returns a DateTime string that can be used to set a RTC clock - or simply to get a Timestamp on simple IoT devices.
 
-The API:s can be viewed in Swagger using URL: https://localhost:port/swagger
+All log endpoints validate their input: a message is required and may be at most 8000 characters, the sender at most 200 and the log type at most 50. Invalid entries get a 400 response with a validation problem; request bodies larger than 64 KB get a 413.
+
+The API:s can be viewed with Scalar (Development only) using URL: http://<api-address>:4200/scalar/v1
 
 Included are also some client-test code, one micropython file showing how to use both the GET and POST version of LOG - and a .HTTP file that can be used for testing in VS2022 or VS Code. In the python file, don't forget to **set your own WiFi config!**
 
 ### Requirements:
 
-1. NET 9 SDK
+1. .NET 10 SDK
 2. VS 2022 Community or better / VS Code with C# Dev Kit
 3. If you are going to call API:s from other devices, - you must host Project Marvin API so it gets an IP number - not "localhost". If you only use it locally in your internal network
 4. SQLite Database - can be run on all platforms
 
 ### Coding stuff:
 1. QuickGrid uses Scoped CSS to style the headers and lines. "Home.razor.css" - ::deep is for selection the QuickGrid scope. For this to work, the Quickgrid must be contained in a container, like a DIV tag
-2. API Project have an Attribute-class for checking "API KEY" - it is not used right now, but can easily be added to all endpoints
+2. API Project has an endpoint filter that checks the "X-API-Key" header against the `ApiKey` setting - add `.RequireApiKey()` to any endpoint that should require it (only `/api/protected` uses it now)
 3. Blazor Server App - have some "smart" code to reconnect to SignalR that is run in the API project. A green or red symnbol is shown when connected/disconnected. The code for this is in the Home.razor.cs in the Project Marvin project
 4. Identity is enabled - also using SQLite. You can add the [Authorize] keyword to all pages you want to require login. I'm having it on the Register page - so no one can register a new account without already being logged in.
-5. IPFilterMiddleware is a class that can be registered in the API project, it will stop all API calls from non local IP-adresses.
+5. IpFilterMiddleware is enabled in the API project and answers 403 to all callers outside the local network (loopback, 10.x, 172.16-31.x, 192.168.x and IPv6 local addresses). Turn it off with `"IpFilter": { "Enabled": false }` in appsettings.json.
+6. The API project is covered by integration tests in `ProjectMarvinAPI.Tests` - run them with `dotnet test`.
 
 ### Ideas for the future
 1. You can host the solultion in the cloud if you like

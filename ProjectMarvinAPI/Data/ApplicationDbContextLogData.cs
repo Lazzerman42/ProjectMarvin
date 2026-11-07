@@ -1,18 +1,12 @@
 ﻿using Marvin.Common;
 using Microsoft.EntityFrameworkCore;
 
-namespace ProjectMarvinAPI.Data
-{
-  /// <summary>
-  /// DBContext for LogData
-  /// </summary>
-  public class ApplicationDbContextLogData : DbContext
-  {
-    public ApplicationDbContextLogData(DbContextOptions<ApplicationDbContextLogData> options)
-        : base(options)
-    {
-    }
+namespace ProjectMarvinAPI.Data;
 
-    public DbSet<LogEntry> LogEntries { get; set; }
-  }
+/// <summary>
+/// DbContext for the shared log database. The schema is owned by the migrations in the Web project.
+/// </summary>
+public class ApplicationDbContextLogData(DbContextOptions<ApplicationDbContextLogData> options) : DbContext(options)
+{
+  public DbSet<LogEntry> LogEntries => Set<LogEntry>();
 }
