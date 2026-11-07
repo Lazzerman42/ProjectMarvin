@@ -1,74 +1,196 @@
 # ProjectMarvin
+
+A self-hosted logging hub for home-built IoT devices. Sensors, microcontrollers (I use Raspberry Pi Pico W with MicroPython), scripts and servers send log entries with simple HTTP calls, and a Blazor web app shows them in real time.
+
+![MarvinWeb, dark theme](docs/images/web-desktop-dark.png)
+*MarvinWeb: entries from every device on the network show up as they arrive.*
+
 ![image](https://github.com/user-attachments/assets/b771f6d0-8388-4f57-8ed8-1e10e1823699)
-*This is my usecase - I need to log/collect info from lots of different devices and computers.*
-
-![image](https://github.com/user-attachments/assets/c4321b08-d071-41a7-a266-3b2693ec8c89)
-*This is the Blazor Server WebApp, logged in as Marvin@log.com*
-
-![image](https://github.com/user-attachments/assets/a786a21d-4e2b-4603-a61c-4b63babecb4d)
-*API project with swagger*
+*This is my use case: I need to log and collect info from lots of different devices and computers.*
 
 ## The point of this project is to
 
-1. Give myself a tool when debugging my homebuilt Smart Home stuff - I use RPi Pico W with Micropython
-2. Have a central monitor/logging point for all my devices and services. With an easy to call API endpoint, so low end devices can use it
-3. A "framework" for API-functions and a WEB UI. Whenever I dream up a new idea, the building blocks are aldready in place making it simple and fast to add new stuff
-4. Stepping stones/Builing blocks for other folks who is coding IoT stuff - and maybe are more into electronics than code
-5. ... Always fun to build stuff with new technologies :-)
+1. Give myself a tool when debugging my home-built smart home stuff. I use RPi Pico W with MicroPython.
+2. Have a central monitoring and logging point for all my devices and services, with API endpoints simple enough for low-end devices.
+3. Be a "framework" for API functions and a web UI. Whenever I dream up a new idea, the building blocks are already in place, so adding new stuff is quick.
+4. Be stepping stones for other folks who code IoT stuff and maybe are more into electronics than code.
+5. ... It's always fun to build stuff with new technologies :-)
 
-So what is this? It is a simple .NET 8 Blazor ServerApp project + ASP Net Core Minimal API project that uses SignalR/Websocket to display realtime incoming LogEntries. 
+## What's in the box
 
-The solution is divided into two projects, one serversideproject Webproject, with identity enabled and one API project. 
+The solution (`ProjectMarvin.sln`, .NET 10) has four projects:
 
-### The API:s included are:
+| Project | What it is |
+|---|---|
+| `ProjectMarvinAPI` | ASP.NET Core Minimal API that receives log entries, saves them in SQLite and notifies the web app through SignalR. Meant for the local network only. |
+| `ProjectMarvinWeb` | Blazor Server web app (MarvinWeb) with login (ASP.NET Core Identity) that shows the log. Can be exposed to the internet. |
+| `Common` | The shared `LogEntry` model. |
+| `ProjectMarvinAPI.Tests` | Integration tests for the API. |
 
-1. LOG (GET) - simplest way to commit a new LogEntry to the monitor(webApp). The class used is "LogEntry" - modify it as you see fit. If you only send a single string as LogEntry, a new LogEntry will be created and the single string will be set as "Message"
-2. LOG (POST) - same as above, but made for POST requests
-3. ECHO (GET) - Send in something and get it Echoed back. I use this to check that WiFi is healty when using my Pico W:s
-4. GetLocalTime (GET) - returns a DateTime string that can be used to set a RTC clock - or simply to get a Timestamp on simple IoT devices.
+```mermaid
+flowchart LR
+    D["Devices and scripts<br/>(Pico W, curl, PowerShell...)"] -- "HTTP GET / POST" --> A[ProjectMarvinAPI]
+    A -- "saves" --> DB[("SQLiteLogData.db")]
+    A -- "SignalR: ReceiveLogUpdate" --> W[MarvinWeb]
+    W -- "reads" --> DB
+    U((You)) -- "browser" --> W
+```
 
-All log endpoints validate their input: a message is required and may be at most 8000 characters, the sender at most 200 and the log type at most 50. Invalid entries get a 400 response with a validation problem; request bodies larger than 64 KB get a 413.
+The API saves each entry and broadcasts a "new data" signal on its SignalR hub (`/loghub`). MarvinWeb listens to that hub and reloads the list, so new entries appear without refreshing the page.
 
-The API:s can be viewed with Scalar (Development only) using URL: http://<api-address>:4200/scalar/v1
+## MarvinWeb
 
-Included are also some client-test code, one micropython file showing how to use both the GET and POST version of LOG - and a .HTTP file that can be used for testing in VS2022 or VS Code. In the python file, don't forget to **set your own WiFi config!**
+- **Live log:** new entries appear as they arrive. The **Live** badge shows whether the SignalR connection to the API is up, and it reconnects automatically.
+- **Search** in sender, message and IP address, with matches highlighted. Searching ignores case, including for å, ä and ö.
+- **Filter** by level (Info, Warning, Error) and **sort** by any column.
+- **Show latest** shows only the newest entry per device, which is handy for seeing what every device last reported.
+- **Infinite scroll:** entries load 20 at a time as you scroll.
+- **Dark and light theme**, a mobile layout, and it can be installed as an app (PWA).
+- **Delete all** clears the log after a confirmation.
+- Login is required. New accounts can only be registered by someone who is already logged in, and an account is locked for 15 minutes after 5 failed login attempts.
 
-### Requirements:
+| Light theme | Search |
+|---|---|
+| ![Light theme](docs/images/web-desktop-light.png) | ![Search with highlighted matches](docs/images/web-search.png) |
+
+<img src="docs/images/web-mobile.png" alt="MarvinWeb on a phone" width="300">
+
+*On a phone the list turns into cards.*
+
+## The API
+
+All endpoints are under `/api/`. Routes are case-insensitive.
+
+| Endpoint | What it does |
+|---|---|
+| `GET api/Log/{message}` | Creates a log entry from the URL. `{message}` is URL-encoded text, or a URL-encoded LogEntry JSON object. |
+| `GET api/Log/ExampleApp/{message}` | Like the one above, but the sender is always "Magical App". An example of an endpoint with preset values for one app. |
+| `POST api/Log/` | Creates a log entry from the raw body (any content type): plain text or LogEntry JSON. |
+| `POST api/LogEx/` | Creates a log entry from LogEntry JSON. The preferred endpoint for clients that can send JSON. |
+| `GET api/Echo/{message}` | Returns the message. Use it to check that Wi-Fi works. |
+| `GET api/GetLocalTime` | Returns the server's local time in ISO 8601 format, for devices without a real-time clock. |
+| `GET api/LogCount` | Returns the number of stored entries (handy to check that the database is found). |
+| `GET api/protected` | Example of an endpoint that requires an API key. |
+
+**Yes, GET creates log entries, on purpose.** Some single-chip sensors can only make plain HTTP GET requests, so the simplest way to log is to put the message in the URL.
+
+A LogEntry looks like this. Only `Message` is required:
+
+```json
+{ "Sender": "Greenhouse", "LogType": "Warning", "Message": "Temperature above 30 °C", "LogDate": "2026-11-07T14:30:00" }
+```
+
+- `LogType` defaults to `Info`. MarvinWeb colors Info, Warning, Error and Success (OK); anything else is shown as debug.
+- `LogDate` defaults to the time the API received the entry.
+- The caller's IP address is always recorded by the server.
+- Text can be UTF-8, or URL-encoded ISO-8859-1 (`%E5` = å) as the MicroPython example sends it.
+
+**Limits:** a message is required and may be at most 8000 characters, the sender at most 200 and the log type at most 50. Invalid entries get a `400` response with a description of the problem, and request bodies larger than 64 KB get a `413`. Errors when saving are logged on the server and not returned to the device, since simple devices can't do anything useful with them.
+
+The API is documented with [Scalar](https://scalar.com) at `http://<api-address>:4200/scalar/v1` when it runs in the Development environment.
+
+![Scalar API documentation](docs/images/api-scalar.png)
+
+### Sending logs
+
+**curl**
+
+```bash
+curl "http://192.168.1.20:4200/api/Log/Hello+from+curl"
+curl -X POST "http://192.168.1.20:4200/api/LogEx/" -H "Content-Type: application/json" -d "{\"Sender\":\"curl\",\"Message\":\"Hello Marvin\"}"
+```
+
+**PowerShell 7**
+
+```powershell
+Invoke-RestMethod -Method Post http://192.168.1.20:4200/api/LogEx/ -ContentType 'application/json; charset=utf-8' `
+  -Body (@{ Sender = 'PowerShell'; LogType = 'Info'; Message = 'Hello Marvin' } | ConvertTo-Json)
+```
+
+**MicroPython (Pico W)**
+
+```python
+import urequests as requests
+requests.get("http://192.168.1.20:4200/api/Log/Hello+from+Pico").close()
+```
+
+More examples are in [`ProjectMarvinAPI/Example Code`](ProjectMarvinAPI/Example%20Code):
+
+- `logapi.py` and `Test MarvinAPI.py`: MicroPython for the Pico W, sending with both GET and POST. Set your own Wi-Fi details in `Test MarvinAPI.py` and the API address in `logapi.py` (another device can't use localhost).
+- `API Test.http`: requests for Visual Studio or VS Code.
+- `CURL.txt`: curl and PowerShell examples.
+- `Test-MarvinApi.ps1`: checks a deployed API end to end. It calls Echo, GetLocalTime and LogCount, logs one entry with POST and one with GET, and checks that both were saved. Look for "Marvin API verified" in MarvinWeb afterwards.
+
+  ```powershell
+  pwsh ".\ProjectMarvinAPI\Example Code\Test-MarvinApi.ps1" -BaseUrl http://192.168.1.20:4200
+  ```
+
+## Security
+
+The API has no login, so it must only be reachable from your local network:
+
+- **LAN-only IP filter:** the API answers `403` to every caller outside the local network. It accepts loopback, `10.x`, `172.16–31.x`, `192.168.x` and IPv6 local addresses. It can be turned off with `"IpFilter": { "Enabled": false }`, for example if you only want to rely on IIS IP restrictions, or if devices reach the API over a VPN with other addresses.
+- **API key (optional):** add `.RequireApiKey()` to an endpoint to require the `X-API-Key` header to match the `ApiKey` setting. Only `api/protected` uses it now, and when no key is configured every request to it is rejected.
+- **No internal details in errors:** failures return a standard error response without exception messages.
+
+MarvinWeb requires login, locks accounts after repeated failed logins, only lets logged-in users register new accounts, blocks redirects to other sites after login, and sends security headers (`X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`). Use HTTPS if you expose it to the internet.
+
+## Getting started
+
+### Requirements
 
 1. .NET 10 SDK
-2. VS 2022 Community or better / VS Code with C# Dev Kit
-3. If you are going to call API:s from other devices, - you must host Project Marvin API so it gets an IP number - not "localhost". If you only use it locally in your internal network
-4. SQLite Database - can be run on all platforms
+2. Visual Studio 2026, or VS Code with the C# Dev Kit
+3. Nothing else: SQLite runs on all platforms, and the databases are included.
 
-### Coding stuff:
-1. QuickGrid uses Scoped CSS to style the headers and lines. "Home.razor.css" - ::deep is for selection the QuickGrid scope. For this to work, the Quickgrid must be contained in a container, like a DIV tag
-2. API Project has an endpoint filter that checks the "X-API-Key" header against the `ApiKey` setting - add `.RequireApiKey()` to any endpoint that should require it (only `/api/protected` uses it now)
-3. Blazor Server App - have some "smart" code to reconnect to SignalR that is run in the API project. A green or red symnbol is shown when connected/disconnected. The code for this is in the Home.razor.cs in the Project Marvin project
-4. Identity is enabled - also using SQLite. You can add the [Authorize] keyword to all pages you want to require login. I'm having it on the Register page - so no one can register a new account without already being logged in.
-5. IpFilterMiddleware is enabled in the API project and answers 403 to all callers outside the local network (loopback, 10.x, 172.16-31.x, 192.168.x and IPv6 local addresses). Turn it off with `"IpFilter": { "Enabled": false }` in appsettings.json.
-6. The API project is covered by integration tests in `ProjectMarvinAPI.Tests` - run them with `dotnet test`.
+### Run it
 
-### Ideas for the future
-1. You can host the solultion in the cloud if you like
-2. Or in containers/docker
-3. Add support for MQTT, both sending and receiving
-4. Add new Web-pages with information / stuff that makes sense for your project needs
+```powershell
+dotnet run --project ProjectMarvinAPI   # http://<this machine's LAN IP>:4200
+dotnet run --project ProjectMarvinWeb   # https://localhost:7032
+```
 
-## Getting started / Setup
-1. The projects are configured to use localhost - API project at port 4200. If you run both web and API locally, you can use Kestrel for both. If you want to access the Marvin Blazor Web from internet, use HTTPS/SSL and host using IIS ( or whats best on your platform )
-2. Check the AppSettings.json for the projects, the Path for SQLite LogDB is essential. Project Marvin(web) has two database connection strings, one for LogDB and one for IdentityDB. LogDB is used by both the API and the WEB project.
-3. I run the Marvin API locally, using Kestrel - and I let it start on the current machines IP + port 4200, uncomment the code on line 20-24 in Program.cs (Marvin API) if you want to do the same
-4. The user in the Identity database is: Marvin@log.com / Marvin42!
-5. Make sure you change password / makes a new user before exposing the Web to Internet.
-6. In Marvin API Project, there is a folder named "Example code". There you'll find som micropyhton code that I have tested on my RPi Pico W and some examples of using CURL and Powershell to send LogEntries. The python code is divided into two files, "Test MarvinAPI.py", here you need to fill in your Wifi Details - and "logapi.py", here you will have to provide the URL to the API (you can't use localhost since the Pico is another computer).
+Log in to MarvinWeb as **Marvin@log.com / Marvin42!**. Change the password, or create a new user and delete this one, before you expose MarvinWeb to the internet.
 
-### Host the API safely in IIS using IP restrictions
-1. You can host the API Safely in IIS using the IP restrictions module in IIS.
-2. Use "settings" and make default "deny all" -> forbidden, rule
-3. Add Allow rule for your network, if you use IP Range setting you may enter: IP Adress 192.168.1.0 and Mask 255.255.255.0 to allow your local LAN to access the API in IIS
-4. Under host bindings, don't set a Domain Name(URL) - but set the IP adress to listen to (same as the IIS server adress)
+### Configuration
 
-Now you have a safe place to host your API inside IIS - it won't be reachable from the Intenet
-Have Fun!
+| Setting | Project | What it does |
+|---|---|---|
+| `ConnectionStrings:LogDataConnection` | both | Path to the shared log database `SQLiteLogData.db`. Both projects must point to the same file. |
+| `ConnectionStrings:IdentityConnection` | Web | Path to the login database `SQLiteLogin.db`. |
+| `ConnectionStrings:SignalRAPI` | Web | The API's SignalR hub, e.g. `http://192.168.1.20:4200/loghub`. |
+| `IpFilter:Enabled` | API | LAN-only IP filter, on by default. |
+| `ApiKey` | API | Key for endpoints that use `.RequireApiKey()`. |
+| `Marvin:Port` | API | Port when running on Kestrel, default `4200`. |
+
+When the API runs on Kestrel (e.g. `dotnet run`), it listens on this machine's LAN IPv4 address so other devices can reach it. If you configure `Kestrel:Endpoints` yourself, that is used instead.
+
+### Host the API safely in IIS
+
+I host the API in IIS as its own app, reachable only from the LAN:
+
+1. Use the IP restrictions module in IIS.
+2. Under "Settings", make the default rule "Deny" with the action "Forbidden".
+3. Add an Allow rule for your network. With an IP range you can enter IP address 192.168.1.0 and mask 255.255.255.0 to allow your local LAN.
+4. In the site bindings, don't set a host name, but set the IP address to listen on (the IIS server's address).
+
+Together with the API's own IP filter that gives two layers of protection, and the API won't be reachable from the internet. After publishing, run `Test-MarvinApi.ps1` to check that everything works.
+
+## Tests
+
+```powershell
+dotnet test ProjectMarvinAPI.Tests
+```
+
+The tests run the whole API in memory against a temporary SQLite database. They cover every endpoint, the response formats deployed devices rely on, text decoding (including å, ä and ö from the MicroPython example), input validation, the IP filter, the API key and the SignalR notification.
+
+## Ideas for the future
+
+1. Host the solution in the cloud.
+2. Or in containers / Docker.
+3. Add support for MQTT, both sending and receiving.
+4. Add new web pages with information that makes sense for your project.
+
+Have fun!
 
 // Lazze Ziden - Stockholm Sweden
