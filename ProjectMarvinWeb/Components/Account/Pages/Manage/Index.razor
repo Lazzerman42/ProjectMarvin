@@ -8,29 +8,32 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject IdentityRedirectManager RedirectManager
 
-<PageTitle>Profile</PageTitle>
+<PageTitle>Profile · Project Marvin</PageTitle>
 
-<h3>Profile</h3>
-<StatusMessage />
-
-<div class="row">
-    <div class="col-md-6">
-        <EditForm Model="Input" FormName="profile" OnValidSubmit="OnValidSubmitAsync" method="post">
-            <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
-            <div class="form-floating mb-3">
-                <input type="text" value="@username" class="form-control" placeholder="Please choose your username." disabled />
-                <label for="username" class="form-label">Username</label>
-            </div>
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.PhoneNumber" class="form-control" placeholder="Please enter your phone number." />
-                <label for="phone-number" class="form-label">Phone number</label>
-                <ValidationMessage For="() => Input.PhoneNumber" class="text-danger" />
-            </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Save</button>
-        </EditForm>
+<section class="panel">
+    <div class="panel-head">
+        <h2>Profile</h2>
+        <p>Your user name is the email address you log in with.</p>
     </div>
-</div>
+
+    <StatusMessage />
+
+    <EditForm Model="Input" FormName="profile" OnValidSubmit="OnValidSubmitAsync" method="post" class="stack">
+        <DataAnnotationsValidator />
+        <div class="field">
+            <label for="username">User name</label>
+            <input id="username" type="text" value="@username" class="input" readonly />
+        </div>
+        <div class="field">
+            <label for="Input.PhoneNumber">Phone number <span class="muted">(optional)</span></label>
+            <InputText @bind-Value="Input.PhoneNumber" id="Input.PhoneNumber" class="input" type="tel" autocomplete="tel" />
+            <ValidationMessage For="() => Input.PhoneNumber" />
+        </div>
+        <div class="actions">
+            <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+    </EditForm>
+</section>
 
 @code {
     private ApplicationUser? user;

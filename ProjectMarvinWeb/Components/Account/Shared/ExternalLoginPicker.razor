@@ -3,30 +3,17 @@
 @using ProjectMarvin.Data
 
 @inject SignInManager<ApplicationUser> SignInManager
-@inject IdentityRedirectManager RedirectManager
 
-@if (externalLogins.Length == 0)
+@* Shows nothing until an external login provider (Microsoft, Google ...) is configured *@
+@if (externalLogins.Length > 0)
 {
-    <div>
-        <p>
-            There are no external authentication services configured. See this <a href="https://go.microsoft.com/fwlink/?LinkID=532715">article
-            about setting up this ASP.NET application to support logging in via external services</a>.
-        </p>
-    </div>
-}
-else
-{
-    <form class="form-horizontal" action="Account/PerformExternalLogin" method="post">
-        <div>
-            <AntiforgeryToken />
-            <input type="hidden" name="ReturnUrl" value="@ReturnUrl" />
-            <p>
-                @foreach (var provider in externalLogins)
-                {
-                    <button type="submit" class="btn btn-primary" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">@provider.DisplayName</button>
-                }
-            </p>
-        </div>
+    <form class="stack-sm" action="Account/PerformExternalLogin" method="post">
+        <AntiforgeryToken />
+        <input type="hidden" name="ReturnUrl" value="@ReturnUrl" />
+        @foreach (var provider in externalLogins)
+        {
+            <button type="submit" class="btn btn-secondary btn-block" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">Continue with @provider.DisplayName</button>
+        }
     </form>
 }
 

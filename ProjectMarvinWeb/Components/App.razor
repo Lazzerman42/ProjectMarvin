@@ -16,9 +16,9 @@
       try { localStorage.setItem('theme', next); } catch (e) { }
     }
   </script>
-  <link rel="stylesheet" href="@Assets["bootstrap/bootstrap.min.css"]" />
   <link rel="stylesheet" href="@Assets["app.css"]" />
   <link rel="stylesheet" href="@Assets["theme.css"]" />
+  <link rel="stylesheet" href="@Assets["account.css"]" />
   <link rel="stylesheet" href="@Assets["ProjectMarvin.styles.css"]" />
   <link rel="icon" type="image/png" href="favicon.png" />
 
@@ -41,6 +41,7 @@
 <body>
 	<Routes @rendermode="RenderModeForPage" />
 	<script src="@Assets["marvin.js"]"></script>
+	<script src="@Assets["Components/Account/Shared/PasskeySubmit.razor.js"]" type="module"></script>
 	<script autostart="false" src="_framework/blazor.web.js"></script>
   <script>
     Blazor.start({

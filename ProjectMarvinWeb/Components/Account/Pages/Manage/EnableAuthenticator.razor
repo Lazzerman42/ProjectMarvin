@@ -12,7 +12,7 @@
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<EnableAuthenticator> Logger
 
-<PageTitle>Configure authenticator app</PageTitle>
+<PageTitle>Authenticator app · Project Marvin</PageTitle>
 
 @if (recoveryCodes is not null)
 {
@@ -20,49 +20,42 @@
 }
 else
 {
-    <StatusMessage Message="@message" />
-    <h3>Configure authenticator app</h3>
-    <div>
-        <p>To use an authenticator app go through the following steps:</p>
-        <ol class="list">
+    <section class="panel">
+        <div class="panel-head">
+            <h2>Set up an authenticator app</h2>
+            <p>After this, logging in with a password also asks for a code from the app.</p>
+        </div>
+
+        <StatusMessage Message="@message" />
+
+        <ol class="steps">
             <li>
-                <p>
-                    Download a two-factor authenticator app like Microsoft Authenticator for
-                    <a href="https://go.microsoft.com/fwlink/?Linkid=825072">Android</a> and
-                    <a href="https://go.microsoft.com/fwlink/?Linkid=825073">iOS</a> or
-                    Google Authenticator for
-                    <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2&amp;hl=en">Android</a> and
-                    <a href="https://itunes.apple.com/us/app/google-authenticator/id388497605?mt=8">iOS</a>.
-                </p>
+                Install an authenticator app, like Microsoft Authenticator
+                (<a href="https://go.microsoft.com/fwlink/?Linkid=825072">Android</a>,
+                <a href="https://go.microsoft.com/fwlink/?Linkid=825073">iOS</a>) or Google Authenticator
+                (<a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2&amp;hl=en">Android</a>,
+                <a href="https://itunes.apple.com/us/app/google-authenticator/id388497605?mt=8">iOS</a>).
             </li>
             <li>
-                <p>Scan the QR Code or enter this key <kbd>@sharedKey</kbd> into your two factor authenticator app. Spaces and casing do not matter.</p>
-                <div class="alert alert-info">Learn how to <a href="https://go.microsoft.com/fwlink/?Linkid=852423">enable QR code generation</a>.</div>
-                <div></div>
-                <div data-url="@authenticatorUri"></div>
+                Add an account in the app and enter this key. Spaces and casing don't matter.
+                <div style="margin-top: 8px"><span class="key">@sharedKey</span></div>
             </li>
             <li>
-                <p>
-                    Once you have scanned the QR code or input the key above, your two factor authentication app will provide you
-                    with a unique code. Enter the code in the confirmation box below.
-                </p>
-                <div class="row">
-                    <div class="col-md-6">
-                        <EditForm Model="Input" FormName="send-code" OnValidSubmit="OnValidSubmitAsync" method="post">
-                            <DataAnnotationsValidator />
-                            <div class="form-floating mb-3">
-                                <InputText @bind-Value="Input.Code" class="form-control" autocomplete="off" placeholder="Please enter the code." />
-                                <label for="code" class="control-label form-label">Verification Code</label>
-                                <ValidationMessage For="() => Input.Code" class="text-danger" />
-                            </div>
-                            <button type="submit" class="w-100 btn btn-lg btn-primary">Verify</button>
-                            <ValidationSummary class="text-danger" role="alert" />
-                        </EditForm>
+                Enter the code the app shows.
+                <EditForm Model="Input" FormName="send-code" OnValidSubmit="OnValidSubmitAsync" method="post" class="stack" style="margin-top: 12px">
+                    <DataAnnotationsValidator />
+                    <div class="field">
+                        <label for="Input.Code">Verification code</label>
+                        <InputText @bind-Value="Input.Code" id="Input.Code" class="input mono" autocomplete="one-time-code" inputmode="numeric" />
+                        <ValidationMessage For="() => Input.Code" />
                     </div>
-                </div>
+                    <div class="actions">
+                        <button type="submit" class="btn btn-primary">Verify</button>
+                    </div>
+                </EditForm>
             </li>
         </ol>
-    </div>
+    </section>
 }
 
 @code {

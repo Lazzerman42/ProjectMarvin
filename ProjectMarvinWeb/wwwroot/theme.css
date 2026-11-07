@@ -1,5 +1,5 @@
 /* Marvin design tokens (dark & light). Follows the system setting until the theme toggle
-   stores an explicit choice in data-theme. Loaded after bootstrap and app.css. */
+   stores an explicit choice in data-theme. Loaded after app.css. */
 
 @font-face {
 	font-family: "Geist";
@@ -150,16 +150,30 @@
 	--lvl-success-text: oklch(0.82 0.12 150); --lvl-success-dot: oklch(0.75 0.15 150);
 }
 
-/* -- Base ---------------------------------------------------- */
+/* -- Base (replaces the parts of Bootstrap's reboot the app relied on) -- */
+*, *::before, *::after { box-sizing: border-box; }
+
 html, body {
+	margin: 0;
 	background: var(--bg-app);
 	color: var(--text-primary);
 	font-family: var(--font-ui);
 	font-size: 14px;
+	line-height: 1.5;
 	-webkit-font-smoothing: antialiased;
+	-webkit-text-size-adjust: 100%;
 }
 
-a, .btn-link { color: var(--accent-link); }
+h1, h2, h3, h4, h5, h6 { margin: 0 0 0.5rem; font-weight: 600; line-height: 1.2; }
+p { margin: 0 0 1rem; }
+img, svg { vertical-align: middle; }
+ul, ol { margin: 0 0 1rem; padding-left: 2rem; }
+button, input, select, textarea { margin: 0; font-family: inherit; font-size: inherit; line-height: inherit; }
+button:not(:disabled) { cursor: pointer; }
+label { display: inline-block; }
+:focus:not(:focus-visible) { outline: none; }
+
+a { color: var(--accent-link); }
 
 ::placeholder { color: var(--text-placeholder); opacity: 1; }
 
@@ -170,50 +184,6 @@ mark.hl {
 	background: var(--highlight-bg);
 	color: var(--highlight-text);
 }
-
-/* -- Bootstrap overrides (Account pages) --------------------- */
-h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
-h2 { font-size: 17px; font-weight: 600; }
-h3 { font-size: 15px; font-weight: 600; }
-hr { border-color: var(--border-default); opacity: 1; }
-
-.form-control, .form-select, input, select, textarea {
-	background-color: var(--bg-control);
-	color: var(--text-primary);
-	border: 1px solid var(--border-control);
-	border-radius: 8px;
-}
-
-.form-control:focus, .form-select:focus {
-	background-color: var(--bg-control);
-	color: var(--text-primary);
-	border-color: var(--switch-on);
-	box-shadow: 0 0 0 3px color-mix(in oklch, var(--switch-on) 25%, transparent);
-}
-
-.form-floating > label, .text-muted { color: var(--text-secondary) !important; }
-.form-floating > .form-control:focus ~ label::after,
-.form-floating > .form-control:not(:placeholder-shown) ~ label::after { background: transparent !important; }
-
-.btn-primary {
-	background: var(--switch-on);
-	border-color: var(--switch-on);
-	color: #fff;
-	border-radius: 8px;
-}
-
-.btn-primary:hover { background: color-mix(in oklch, var(--switch-on) 85%, black); border-color: transparent; }
-
-.card, .list-group-item {
-	background: var(--bg-surface);
-	color: var(--text-primary);
-	border-color: var(--border-default);
-}
-
-.nav-pills .nav-link { color: var(--text-secondary); border-radius: 8px; }
-.nav-pills .nav-link.active { background: var(--bg-nav-active); color: var(--text-primary); }
-
-.text-danger, .validation-message { color: var(--danger-text) !important; }
 
 /* The log page manages its own padding and scrolling */
 main.content:has(> .log-page) {

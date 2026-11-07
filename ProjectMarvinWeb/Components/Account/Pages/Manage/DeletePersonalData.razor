@@ -9,33 +9,32 @@
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<DeletePersonalData> Logger
 
-<PageTitle>Delete Personal Data</PageTitle>
+<PageTitle>Delete account · Project Marvin</PageTitle>
 
-<StatusMessage Message="@message" />
+<section class="panel danger-zone">
+    <div class="panel-head">
+        <h2>Delete account</h2>
+        <p>This permanently removes your account, your passkeys and your login. It can't be undone.</p>
+    </div>
 
-<h3>Delete Personal Data</h3>
+    <StatusMessage Message="@message" />
 
-<div class="alert alert-warning" role="alert">
-    <p>
-        <strong>Deleting this data will permanently remove your account, and this cannot be recovered.</strong>
-    </p>
-</div>
-
-<div>
-    <EditForm Model="Input" FormName="delete-user" OnValidSubmit="OnValidSubmitAsync" method="post">
+    <EditForm Model="Input" FormName="delete-user" OnValidSubmit="OnValidSubmitAsync" method="post" class="stack">
         <DataAnnotationsValidator />
-        <ValidationSummary class="text-danger" role="alert" />
         @if (requirePassword)
         {
-            <div class="form-floating mb-3">
-                <InputText type="password" @bind-Value="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="Please enter your password." />
-                <label for="password" class="form-label">Password</label>
-                <ValidationMessage For="() => Input.Password" class="text-danger" />
+            <div class="field">
+                <label for="Input.Password">Enter your password to confirm</label>
+                <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="input" autocomplete="current-password" aria-required="true" />
+                <ValidationMessage For="() => Input.Password" />
             </div>
         }
-        <button class="w-100 btn btn-lg btn-danger" type="submit">Delete data and close my account</button>
+        <div class="actions">
+            <button class="btn btn-danger" type="submit">Delete my account</button>
+            <a href="Account/Manage/PersonalData" class="btn btn-secondary">Cancel</a>
+        </div>
     </EditForm>
-</div>
+</section>
 
 @code {
     private string? message;

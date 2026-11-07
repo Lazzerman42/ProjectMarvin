@@ -1,17 +1,26 @@
 ﻿@inherits LayoutComponentBase
 @layout AccountLayout
 
-<h1>Manage your account</h1>
-
-<div>
-    <h2>Change your account settings</h2>
-    <hr />
-    <div class="row">
-        <div class="col-md-3">
-            <ManageNavMenu />
+<div class="acct-manage">
+    <AuthorizeView>
+        <div class="acct-manage-head">
+            <span class="avatar-lg" aria-hidden="true">@Initial(context.User.Identity?.Name)</span>
+            <div>
+                <h1>Account</h1>
+                <p class="muted">@context.User.Identity?.Name</p>
+            </div>
         </div>
-        <div class="col-md-9">
+    </AuthorizeView>
+
+    <div class="acct-manage-body">
+        <ManageNavMenu />
+        <div class="acct-panels">
             @Body
         </div>
     </div>
 </div>
+
+@code {
+    private static string Initial(string? name) =>
+        string.IsNullOrEmpty(name) ? "?" : char.ToUpperInvariant(name[0]).ToString();
+}
